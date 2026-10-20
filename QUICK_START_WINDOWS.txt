@@ -1,0 +1,36 @@
+TRACE EXPERT CITY — SPACE RENTAL APP
+====================================
+
+1) Extract the ZIP. Do not run from inside the compressed archive.
+2) Open the extracted "TraceExpertCity-SpaceRental-Complete" folder.
+3) Right-click an empty area of the folder and choose "Open in Terminal".
+4) Run this command:
+
+   npm run dev
+
+5) Wait for:
+   TRACE EXPERT CITY is running at http://localhost:5173
+
+6) Open a browser and go to: http://localhost:5173
+7) Click "Staff management" and "Open demo dashboard".
+8) Try Spaces Management > Add a space, then Reservations > New reservation.
+9) Try booking the same meeting room for overlapping dates; the second booking must fail.
+
+FIRST-TIME NOTE: Install Node.js 18+ if `npm` is not recognized.
+ALTERNATIVE: If you already have Python installed, run:
+   python -m http.server 5173
+
+Demo data stays only in your current browser. For an actual shared online
+system with secure staff logins, follow SETUP_SUPABASE.md.
+
+NETLIFY: The extracted folder containing index.html can be deployed as a static site.
+This alone only publishes the DEMO — Supabase is required for shared bookings.
+
+NEW V2 — PUBLIC AVAILABILITY CALENDAR
+- Open http://localhost:5173/#availability
+- Visitors see venue names and booked date/time windows without staff login.
+- Already using Supabase online? Run supabase/03_public_availability.sql
+  in the SAME Supabase project SQL Editor before redeploying.
+- Paste your existing Supabase public configuration into config.js in this new version.
+- Upload the extracted project folder to your EXISTING Netlify site's Deploys screen.
+- No npm run build is needed.
