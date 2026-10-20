@@ -42,6 +42,9 @@
 .language-switcher svg{flex:0 0 17px}
 .language-switcher select{font-family:'DM Sans','Noto Sans Sinhala','Noto Sans Tamil',sans-serif;font-size:.8rem;line-height:1.6;min-height:28px;max-width:112px;border:0;color:#273d58;background:transparent;cursor:pointer;color-scheme:light}
 .language-switcher option{color:#273d58;background:#fff;font-family:'DM Sans','Noto Sans Sinhala','Noto Sans Tamil',sans-serif}
+.language-switcher :is(select,option):lang(en){font-family:'DM Sans',sans-serif}
+.language-switcher :is(select,option):lang(si){font-family:'Noto Sans Sinhala',sans-serif}
+.language-switcher :is(select,option):lang(ta){font-family:'Noto Sans Tamil',sans-serif}
 .language-switcher:focus-within{outline:3px solid #609bf5;outline-offset:2px}
 .language-switcher select:focus{outline:none}
 .public-nav .language-switcher-compact{position:relative;justify-content:center;width:40px;height:40px;min-height:40px;padding:0;margin-left:auto;border-color:#ffffff45;background:#ffffff12;color:inherit;transition:background .16s,border-color .16s}
