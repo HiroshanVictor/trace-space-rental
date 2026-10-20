@@ -43,6 +43,10 @@
 .language-switcher select{font-family:'DM Sans','Noto Sans Sinhala','Noto Sans Tamil',sans-serif;font-size:.8rem;line-height:1.6;min-height:28px;max-width:112px;border:0;color:inherit;background:transparent;cursor:pointer}
 .language-switcher:focus-within{outline:3px solid #609bf5;outline-offset:2px}
 .language-switcher select:focus{outline:none}
+.public-nav .language-switcher-compact{position:relative;justify-content:center;width:40px;height:40px;min-height:40px;padding:0;margin-left:auto;border-color:#ffffff45;background:#ffffff12;color:inherit;transition:background .16s,border-color .16s}
+.public-nav .language-switcher-compact:hover{background:#ffffff25;border-color:#ffffff80}
+.public-nav .language-switcher-compact svg{width:19px;height:19px;flex-basis:19px;pointer-events:none}
+.public-nav .language-switcher-compact select{position:absolute;inset:0;width:100%;height:100%;max-width:none;min-height:0;padding:0;opacity:0}
 .public-header{height:auto;min-height:91px;flex-wrap:wrap;padding-top:16px;padding-bottom:16px;gap:14px 20px}
 .public-header>.public-brand{margin-right:auto;text-align:left;min-width:0}
 .public-nav{flex-wrap:wrap;gap:12px 20px}
@@ -66,7 +70,7 @@ html:is(:lang(si),:lang(ta)) .pub-hour span{line-height:1.6}
 @media(max-width:1050px){.public-header>.public-nav{flex-basis:100%;justify-content:flex-end}.topbar .today{display:none}}
 @media(max-width:580px){
  .public-header{padding:14px 17px;gap:14px 10px}
- .public-header>.public-brand{max-width:calc(100% - 140px)}
+ .public-header>.public-brand{max-width:100%}
  .public-nav{justify-content:flex-start!important;gap:10px 14px}
  .public-nav>button:first-child{display:inline-block}
  .public-nav .extra-link{display:inline-block}
