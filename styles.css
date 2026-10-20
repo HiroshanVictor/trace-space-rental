@@ -35,3 +35,46 @@
 @media(max-width:760px){.pub-controls{padding:16px!important}.pub-filter-row{gap:8px}.pub-space-select{width:100%;margin-left:0}.pub-date-label{flex:1;min-width:175px}.pub-date-label .input{min-width:0;width:100%}.pub-day-chip{padding:8px 2px}.pub-hour-labels{font-size:.55rem;padding:0 8px}.pub-hour-slots{gap:2px}.pub-hour{min-height:40px;font-size:.54rem}.pub-hour span{writing-mode:vertical-rl;transform:rotate(180deg)}.pub-venue-top{padding:13px;flex-wrap:wrap}.pub-venue-thumb{width:54px;flex-basis:54px;height:54px}.pub-venue-top>.btn{flex:1 0 100%}.pub-venue-schedule{padding:0 8px}.pub-venue-details{padding:13px}.pub-results-heading h2{font-size:1.32rem}}
 .pub-calendar-banner h1{color:#fff}
 .pub-calendar-banner .catalog-banner-inner>p{color:#d8e6fa}
+
+/* Language controls stay available in public pages, sign-in and staff views. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.language-switcher{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;border:1px solid #b5c1d1;border-radius:9px;padding:5px 8px;color:#273d58;background:#fff;min-height:38px}
+.language-switcher svg{flex:0 0 17px}
+.language-switcher select{font-family:'DM Sans','Noto Sans Sinhala','Noto Sans Tamil',sans-serif;font-size:.8rem;line-height:1.6;min-height:28px;max-width:112px;border:0;color:inherit;background:transparent;cursor:pointer}
+.language-switcher:focus-within{outline:3px solid #609bf5;outline-offset:2px}
+.language-switcher select:focus{outline:none}
+.public-header{height:auto;min-height:91px;flex-wrap:wrap;padding-top:16px;padding-bottom:16px;gap:14px 20px}
+.public-header>.public-brand{margin-right:auto;text-align:left;min-width:0}
+.public-nav{flex-wrap:wrap;gap:12px 20px}
+.auth-card>.language-switcher{display:flex;width:max-content;margin:0 0 20px auto}
+.loading-screen>.language-switcher{margin-bottom:24px}
+.modal-head{flex-wrap:wrap;gap:12px}
+.modal-tools{display:flex;align-items:center;gap:12px;margin-left:auto}
+.topbar{height:auto;min-height:81px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
+.topbar-right{flex-wrap:wrap;justify-content:flex-end}
+.side-link svg,.btn svg{flex-shrink:0}
+html:lang(si){font-family:'Noto Sans Sinhala','DM Sans',sans-serif}
+html:lang(ta){font-family:'Noto Sans Tamil','DM Sans',sans-serif}
+html:lang(si) :is(h1,h2,h3,h4,.brandname,.stat-value,.topbar-heading,.public-brand){font-family:'Noto Sans Sinhala','Manrope',sans-serif}
+html:lang(ta) :is(h1,h2,h3,h4,.brandname,.stat-value,.topbar-heading,.public-brand){font-family:'Noto Sans Tamil','Manrope',sans-serif}
+html:is(:lang(si),:lang(ta)) :is(h1,h2,h3,h4,.eyebrow,.nav-label,.logo-sub,.data-table th){letter-spacing:normal;line-height:1.6}
+html:is(:lang(si),:lang(ta)) :is(h1,h2,h3,h4,p,.space-price,.btn,.tiny-link){overflow-wrap:anywhere}
+html:is(:lang(si),:lang(ta)) :is(.btn,.side-link,.pill,.public-nav,.topbar-heading){line-height:1.65}
+html:is(:lang(si),:lang(ta)) .hero-content h1{font-size:clamp(2.2rem,4.4vw,4.3rem)}
+html:is(:lang(si),:lang(ta)) .pub-hour{font-size:.6rem;min-height:48px;overflow-wrap:anywhere}
+html:is(:lang(si),:lang(ta)) .pub-hour span{line-height:1.6}
+@media(max-width:1050px){.public-header>.public-nav{flex-basis:100%;justify-content:flex-end}.topbar .today{display:none}}
+@media(max-width:580px){
+ .public-header{padding:14px 17px;gap:14px 10px}
+ .public-header>.public-brand{max-width:calc(100% - 140px)}
+ .public-nav{justify-content:flex-start!important;gap:10px 14px}
+ .public-nav>button:first-child{display:inline-block}
+ .public-nav .extra-link{display:inline-block}
+ .public-nav .btn{font-size:.72rem;max-width:100%}
+ .topbar{gap:10px}.topbar-right{gap:8px;justify-content:flex-start;width:100%}
+ .topbar .avatar{margin-left:auto}
+ .pub-week-nav{gap:4px}.pub-day-chip small{font-size:.6rem}
+ html:is(:lang(si),:lang(ta)) .pub-hour span{writing-mode:horizontal-tb;transform:none;font-size:.5rem;overflow-wrap:anywhere}
+ html:is(:lang(si),:lang(ta)) .pub-hour{min-height:70px}
+ .pub-date-label{flex-wrap:wrap}
+}

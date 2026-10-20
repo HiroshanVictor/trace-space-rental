@@ -17,6 +17,12 @@ A ready-to-run app for the **T2T IT General Batch Space Rental Hackathon**. Base
 
 No `npm install` is required. This project is built with native HTML5, CSS3 and JavaScript ES modules. No framework dependencies, build tools or paid hosting are required to run the demo.
 
+### Languages
+
+The interface supports **English (default), සිංහල (Sinhala), and தமிழ் (Tamil)**. Use the language selector in the public header, staff dashboard, sign-in page, or dialogs. The selection is remembered in this browser and applies to navigation, forms, calendars, dates, validation, and notifications. Switching languages preserves unfinished form entries.
+
+Translations are bundled locally in `src/translations.js`; no translation service or API key is needed. Original sample venue names and descriptions are translated for display. Staff-entered content and customer details remain as entered, and CSV exports retain the original records. Add or edit interface translations using the English message key and its `[Sinhala, Tamil]` pair. `npm test` checks translation coverage and parameters.
+
 ### What is included
 
 | Public visitor | Company staff |
