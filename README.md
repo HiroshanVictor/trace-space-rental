@@ -41,6 +41,7 @@ Translations are bundled locally in `src/translations.js`; no translation servic
 | | View / update inquiries; convert an inquiry to a booking |
 | | Export bookings, spaces, contacts and inquiries to CSV |
 | | Dashboard reports and configurable company contact details |
+| Inquiry stays saved when email fails | Inquiry email status, attempt count and retry without a duplicate inquiry |
 
 **New in v2 — Public Availability Calendar:** Visitors can open **Availability calendar** in the top navigation or use `https://YOUR-SITE.netlify.app/#availability` without a staff account. The page shows venue names, each occupied time range, maintenance/unavailability, and desk quantities. It has next/previous date buttons, a date picker, a venue filter, daily hour-by-hour coloured overview, exact booking times and an inquiry button prefilled with the selected date. **No customer names, emails, phone numbers, booking references, financial data, notes or private maintenance reasons are shown.** All booking statuses except cancelled reserve their times; inquiries do not. It refreshes when changing dates or pressing Refresh (not a constant live stream).
 
@@ -86,6 +87,11 @@ supabase/01_schema.sql        Tables, RLS rules and atomic DB booking constraint
 supabase/02_authorize_staff.sql Staff allowlisting sample
 supabase/03_public_availability.sql Additional public schedule RPC for existing online projects
 netlify/functions/notify-inquiry.mjs Optional email function via Resend
+supabase/04_inquiry_notifications.sql Private email status and server-only retry claim
+src/inquiryNotifications.js   Notification response and timeout handling
+scripts/configure.mjs        Generate public config from deployment environment
+scripts/check-cloud.mjs      Opt-in staging concurrency and privacy check
+BACKLOG.md                   User stories, priorities and hand-in checklist
 SETUP_SUPABASE.md             Full step-by-step online setup
 HACKATHON_DEMO_SCRIPT.md      Suggested judging demo
 TEST_CASES.md                 Required manual verification checklist
@@ -96,3 +102,9 @@ TEST_CASES.md                 Required manual verification checklist
 The original hackathon brief requires an admin booking system first and makes inquiries / extras secondary. The delivered app expands that scope while **keeping public visitors inquiry-only**, as requested by the slides. The "Payments" section is **manual payment recording**; it is not a payment gateway. CSV reports are exports, not a government tax invoice or accounting system. Online email sending is optional and is **not active by default**.
 
 For deployment as a real commercial product, add monitoring, backups, CAPTCHA and API abuse protection, audit logging, tests against a staging database and appropriate privacy / data retention policies.
+
+## Remaining setup for shared use
+
+The core admin features and inquiry workflow are implemented. To activate them across devices, connect a Supabase project and allowlist staff accounts. Run the main schema and `supabase/04_inquiry_notifications.sql`; configure the public project values and server-only email credentials using `SETUP_SUPABASE.md` and `.env.example`.
+
+Git-connected Netlify deployments generate public configuration from environment variables. `npm test` checks local rules, translations, notification failures and configuration handling. `npm run check:cloud` verifies concurrent bookings and private-record access against an explicitly configured staging project, with temporary records cleaned up afterward. Actual inbox delivery and the live hackathon demonstration must still be verified.

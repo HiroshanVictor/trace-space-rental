@@ -1,12 +1,14 @@
 import {makeSeed,id} from './data.js';
 import {availabilityFor,validateBooking,validateSpace,intersects} from './engine.js';
 import {dayBounds,publicFromRecords} from './publicAvailability.js';
+import {notifyInquiry} from './inquiryNotifications.js';
 const KEY='tec-spacerental-v2';
 const config=window.SPACE_RENTAL_CONFIG||{};
 let cloudClient=null;
 let cloudAuth=false;
 export const cloudEnabled=Boolean(config.supabaseUrl && config.supabaseAnonKey);
 export const isCloud=()=>cloudEnabled;
+export const inquiryEmailEnabled=()=>cloudEnabled && Boolean(config.notifyInquiryEndpoint);
 let localData;
 function readDemo(){
   try {const parsed=JSON.parse(localStorage.getItem(KEY)); if(parsed?.spaces && parsed?.bookings) return parsed;}catch(_){}
@@ -113,15 +115,21 @@ export async function remove(table,recordId){
   return query(table,'delete',null,recordId);
 }
 export async function submitInquiry(payload){
-  if(!cloudEnabled) return localSave('inquiries','insert',{...payload,status:'new'});
-  const sup=await client();
-  const {error}=await sup.from('inquiries').insert({...payload,status:'new'});
-  if(error)throw Error(error.message);
-  if(config.notifyInquiryEndpoint){
-    try {await fetch(config.notifyInquiryEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}
-    catch(err){console.warn('Optional email failed:',err);}
+  if(!cloudEnabled){
+    const row=localSave('inquiries','insert',{...payload,status:'new',notification_status:'not_configured'});
+    return {ok:true,id:row.id,notification:{status:'not_configured'}};
   }
-  return {ok:true};
+  const sup=await client();
+  const inquiryId=crypto.randomUUID();
+  // Use a caller-generated ID: anonymous INSERT is allowed, private SELECT is not.
+  const {error}=await sup.from('inquiries').insert({...payload,id:inquiryId,status:'new'});
+  if(error)throw Error(error.message);
+  const notification=await notifyInquiry(config.notifyInquiryEndpoint,inquiryId);
+  return {ok:true,id:inquiryId,notification};
+}
+export async function retryInquiryEmail(inquiryId){
+  if(!inquiryEmailEnabled())return {status:'not_configured'};
+  return notifyInquiry(config.notifyInquiryEndpoint,inquiryId);
 }
 export function demoReset(){if(cloudEnabled)throw Error('Reset is for demo mode only.');localData=makeSeed();saveDemo();}
 export async function currentUserEmail(){

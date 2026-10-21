@@ -1,4 +1,5 @@
 [build]
+  command = "node scripts/configure.mjs"
   publish = "."
 [functions]
   directory = "netlify/functions"

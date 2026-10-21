@@ -3,7 +3,7 @@
 **These steps are optional for the quick hackathon demo**. Follow them before using this website on multiple devices or collecting live inquiries.
 
 1. Create a Supabase project at https://supabase.com/dashboard/. Keep your database password private.
-2. Go to **SQL Editor** → **New query**. Copy all SQL from `supabase/01_schema.sql` and run it as project owner. It creates `spaces`, `bookings`, `inquiries`, `blackouts`, `customers`, `org_settings`, and `staff_accounts` with RLS permissions and transactional booking guards. The script also adds illustrative venues.
+2. Go to **SQL Editor** → **New query**. Run `supabase/01_schema.sql`, then `supabase/04_inquiry_notifications.sql`, as project owner. The main schema creates `spaces`, `bookings`, `inquiries`, `blackouts`, `customers`, `org_settings`, and `staff_accounts` with RLS permissions and transactional booking guards. The notification migration adds private email status and a server-only send claim. The main script also adds illustrative venues.
 3. Go to **Authentication → Users → Add user**. Enter your own staff email and choose a strong password. Confirm the email if needed. For multiple staff, create each person separately (do not share passwords).
 4. Open `supabase/02_authorize_staff.sql`, replace `REPLACE_WITH_YOUR_STAFF_EMAIL@example.com` with the **real account email**, and run the script in the SQL Editor. Repeat for other approved staff accounts.
 5. In Supabase go to **Project Settings → API** (exact labels may differ). Copy **Project URL** and the **publishable/anon key**. NEVER copy a **service_role / secret key** into the browser.
@@ -17,6 +17,12 @@
    ```
 7. Serve the folder at localhost using `python -m http.server 5173`, or deploy the entire project to Netlify. Test public inquiry submission and staff login. The staff portal must ask for your credentials.
 8. Sign in, test a normal booking and then attempt to book the **same meeting room** for an overlapping period. The second save must be refused. Repeat from two browsers if you can. The database also checks concurrent submissions under a per-space row lock.
+
+## Configure Netlify from environment variables
+
+Git-connected Netlify deployments now run `node scripts/configure.mjs` automatically. Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in Netlify's build environment. A legacy public JWT is accepted under `SUPABASE_ANON_KEY` instead. The build writes only these public values and the notification endpoint to `config.js`; service-role keys and email secrets are excluded. Partial configuration, remote HTTP project URLs, and server keys used as public keys fail the build with a generic error that does not print the key.
+
+Existing valid manual configuration is preserved when no environment overrides are supplied. With neither manual values nor environment settings, the app stays in browser-local demo mode. `npm run configure` runs the same generator locally using the current process environment; `.env.example` is a reference, and `.env` files are not automatically loaded. Do not commit real secret files.
 
 ## Existing Netlify + Supabase sites: update to the public availability calendar
 
@@ -41,18 +47,42 @@
 
 ## Optional email delivery for inquiries
 
-The presentation says an inquiry should email an administrator, but allows a confirmation-only fallback during a short hackathon. The base app *always* records inquiries in Supabase. To also send email:
+The presentation says an inquiry should email an administrator, but the speaker notes allow a confirmation-only fallback during a short hackathon. Cloud-mode inquiries are stored before notification is attempted. To enable email:
 
 1. Create an account with an email service such as Resend and obtain an API key; set up a verified sender domain/address as required by the provider.
 2. Deploy to Netlify using a **Git-connected repository** so the included `netlify/functions/notify-inquiry.mjs` is deployed as a serverless function.
-3. In Netlify → Site configuration → Environment variables, set:
+3. Run `supabase/04_inquiry_notifications.sql` in the existing project. In Netlify → Site configuration → Environment variables, set:
+   - `SUPABASE_URL` = the shared project's URL (available to the build and functions);
+   - `SUPABASE_PUBLISHABLE_KEY` = the public publishable key (available to the build);
+   - `SUPABASE_SERVICE_ROLE_KEY` = the private legacy service-role JWT (functions only; never in browser code);
    - `RESEND_API_KEY` = your private mail provider API key;
    - `RESEND_FROM_EMAIL` = a provider-verified sender address;
    - `INQUIRY_TO_EMAIL` = the company's admin inbox.
-4. Set `notifyInquiryEndpoint: '/.netlify/functions/notify-inquiry'` in `config.js`, then redeploy.
+4. Redeploy. The build enables `/.netlify/functions/notify-inquiry` when all email settings are present. You can alternatively set that relative path manually in `config.js`, or use `INQUIRY_NOTIFY_ENDPOINT` as an explicit build override. Keep it blank if notification delivery is not configured.
 5. Test a public inquiry and verify that the database receives it and an email reaches the inbox.
 
-Never put your mail provider secret in `config.js` or commit it to Git. **Important:** Public email endpoints can be abused. Add a server-side CAPTCHA verification / rate-limiting layer for public production traffic. Email sending is a best-effort extra; a successful stored inquiry does not guarantee email delivery.
+The endpoint accepts an inquiry UUID, reads its canonical saved content server-side, and sends it only to the configured staff inbox. Private inquiry contents are never returned to visitors. A database claim limits retries for the same inquiry to once per minute and skips records already marked sent. Resend receives the same idempotency key for retries; its protection lasts 24 hours ([provider documentation](https://resend.com/docs/dashboard/emails/idempotency-keys)). A provider acceptance is recorded as sent; inbox delivery and subsequent bounces are not tracked.
+
+In **Inquiries → Details**, staff can see email status, attempts and the last attempt, then retry a pending or failed notification. A retry does not create another inquiry. Visitors see that the inquiry is saved even if email fails, times out or is unconfigured. Browser responses, provider responses and database errors are checked separately. If a browser closes before notification is requested, the saved inquiry remains pending for staff to retry; there is no scheduled background sender.
+
+Never put the service-role key or mail provider secret in `config.js` or commit either to Git. For public production traffic, protect new inquiry creation with appropriate abuse controls. Stored inquiries remain the authoritative request record; an accepted email does not guarantee inbox delivery.
+
+## Verify the shared workflow against staging
+
+Apply the main schema and notification migration, and create an allowlisted **staging** staff account. In PowerShell, set these process environment variables without committing their values:
+
+```powershell
+$env:SUPABASE_URL = 'https://YOUR-STAGING-PROJECT.supabase.co'
+$env:SUPABASE_PUBLISHABLE_KEY = 'YOUR_PUBLIC_KEY'
+$env:SUPABASE_TEST_STAFF_EMAIL = 'YOUR_STAGING_STAFF_EMAIL'
+$env:SUPABASE_TEST_STAFF_PASSWORD = 'YOUR_STAGING_STAFF_PASSWORD'
+$env:CLOUD_CHECK_ALLOW_WRITES = '1'
+npm run check:cloud
+```
+
+The check creates a uniquely named temporary venue, makes two simultaneous conflicting reservations, and requires exactly one to succeed. It also checks adjacent bookings, anonymous inquiry submission, staff visibility, private-record protection, the server-only notification claim, and the privacy-safe public schedule. It deletes only its own generated records in a `finally` block. If cleanup fails, it reports the exact test record IDs for removal. It does not invoke email delivery.
+
+Without the staging settings and explicit write flag, the check exits before making requests. Live email delivery still needs one deliberate end-to-end submission and inbox verification after deployment.
 
 ## Payments and privacy
 

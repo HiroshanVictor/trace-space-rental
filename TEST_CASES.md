@@ -34,6 +34,17 @@
 - [ ] Anon inquiry insert works without a select policy.
 - [ ] Optional email function works only when configured with private provider credentials.
 
+## Inquiry email reliability
+
+- [ ] Apply `supabase/04_inquiry_notifications.sql` and configure the server-only email settings.
+- [ ] Submit an inquiry: exactly one request is saved; the email reaches the configured admin inbox.
+- [ ] In staff Inquiry Details, verify email status, attempt count and last attempt.
+- [ ] Temporarily misconfigure the provider in staging: the inquiry still saves and the visitor is told not to submit again.
+- [ ] Correct the staging provider settings; wait at least one minute and retry from Inquiry Details. No extra inquiry is created.
+- [ ] Repeated notification calls for an inquiry already marked sent do not send again.
+- [ ] Verify all notification labels and messages in English, Sinhala and Tamil.
+- [ ] Run `npm run check:cloud` with the staging settings described in `SETUP_SUPABASE.md`; confirm temporary records are removed.
+
 ## Public availability calendar (v2)
 
 1. Open `/#availability` while **signed out**. See active venue names and an hour-by-hour view for the chosen day.

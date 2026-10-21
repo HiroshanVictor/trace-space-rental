@@ -1,6 +1,7 @@
 -- TRACE EXPERT CITY — Space Rental (Supabase PostgreSQL)
 -- Execute in the Supabase SQL Editor as project owner.
 -- Production mode: real authentication, row-level security, atomic collision checks.
+-- After this file, run 04_inquiry_notifications.sql to enable email status and retry claims.
 -- WARNING: public inquiry INSERT is open to anonymous visitors; protect with CAPTCHA/rate limits for high-traffic production use.
 
 create extension if not exists pgcrypto;
