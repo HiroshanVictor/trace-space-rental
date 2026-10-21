@@ -66,11 +66,19 @@ test('dynamic labels translate without changing booking codes or substituting pa
 test('sample content translates only for the original records and never mutates stored data',()=>{
   const data=makeSeed(),original=structuredClone(data);
   useLanguage('si');
-  assert.equal(spaceText(data.spaces[0]),'රැස්වීම් කාමරය A');
+  assert.equal(spaceText(data.spaces[0]),'ක්‍රියේටර් ස්පේස්');
   assert.notEqual(spaceText(data.spaces[0],'description'),data.spaces[0].description);
+  for(const space of data.spaces){
+    assert.notEqual(spaceText(space),space.name);
+    assert.notEqual(spaceText(space,'description'),space.description);
+    assert.notEqual(spaceText(space,'amenities'),space.amenities);
+    assert.notEqual(spaceText(space,'conditions'),space.conditions);
+  }
   assert.notEqual(companyAbout(data.settings),data.settings.about);
   assert.equal(spaceText({...data.spaces[0],name:'Custom venue'}),'Custom venue');
-  assert.equal(spaceText({...data.spaces[0],id:'custom-id'}),'Meeting Room A');
+  assert.equal(spaceText({...data.spaces[0],id:'custom-id'}),'ක්‍රියේටර් ස්පේස්');
+  useLanguage('ta');
+  for(const space of data.spaces)assert.notEqual(spaceText(space),space.name);
   assert.equal(companyAbout({about:'Custom business copy'}),'Custom business copy');
   assert.deepEqual(data,original);
 });

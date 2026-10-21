@@ -39,6 +39,9 @@ export function createHandler({env=process.env,fetchImpl=globalThis.fetch} = {})
       `Inquiry: ${inquiry.id}`,`Name: ${clean(inquiry.name,120)}`,`Email: ${clean(inquiry.email,180)}`,
       `Phone: ${clean(inquiry.phone,60)}`,`Space ID: ${inquiry.space_id}`,
       `Requested start: ${inquiry.start_at}`,`Requested end: ${inquiry.end_at}`,
+      `Event nature: ${clean(inquiry.event_nature,200)}`,
+      `Outside services: ${clean(inquiry.outside_services,500)}`,
+      `Alcohol planned: ${inquiry.alcohol_planned?'yes':'no'}`,
       `Message: ${clean(inquiry.message)}`,
       'Review the inquiry in the Trace Expert City staff portal before booking.'
     ].join('\n');

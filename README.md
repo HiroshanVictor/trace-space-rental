@@ -47,9 +47,13 @@ Translations are bundled locally in `src/translations.js`; no translation servic
 
 For **existing Supabase projects**, you **must run** `supabase/03_public_availability.sql` once in the Supabase SQL Editor **before** publishing this updated version. The function publishes only a safe, minimal schedule without loosening private table policies. For a brand new database, `supabase/01_schema.sql` already contains it. Instructions: `SETUP_SUPABASE.md`.
 
-**Reservation rule:** Time intervals use **[start, end)**, so a booking ending at 12:00 allows the next booking to start at 12:00. Pending, confirmed and completed bookings occupy slots; cancelled bookings do not. Desks use an exact peak-overlap count to prevent booking more desks than the company has.
+**Reservation rule:** Room bookings require one hour between different customers, and event spaces require four hours. An extension for the same customer is a separate linked booking that may start immediately when the previous booking ends. Meeting spaces have a one-hour minimum, event spaces four hours, and co-working seats one day. Pending, confirmed and completed bookings occupy slots; cancelled bookings do not. Desks use an exact peak-overlap count.
 
-**Pricing:** Fixed rate per hour, per day, per 7 days, or per **30 days**; billing rounds up to the next full unit. Staff choose the billing unit. Rates and capacities provided with the sample are illustrative—not supplied by the hackathon brief.
+**Pricing:** Rates are estimated demo amounts, not official TRACE prices. Billing supports hours, days, 7-day weeks and 30-day periods. The demo requires 50% advance for event spaces and a provisional 25% for other spaces before staff can mark a booking confirmed. Management must confirm the final amount, payment deadline and cancellation fee.
+
+The starter catalog now uses published TRACE venue names and capacities from [TRACE Spaces](https://tracesrilanka.lk/trace-spaces). Bay 07 capacity, hotseat count, amenities not stated by TRACE, all prices and the stock images are illustrative. In an existing local demo, use **Settings → Reset demo** to load the new starter catalog; this replaces browser-local edits. For an existing shared Supabase database, run `supabase/05_trace_booking_policy.sql` and then `supabase/06_trace_spaces.sql` in SQL Editor. The venue script adds missing records and retains existing bookings and spaces; archive old sample venues in the staff portal if you no longer want them listed.
+
+Public inquiries now collect event nature, outside suppliers and alcohol plans. TRACE management reviews these before making a booking. Staff can record multiple locations for one customer, create a separate extension, record an advance, and require both a phone call and official email before cancellation. A no-show advance, refunds, overtime and cancellation penalties remain management decisions recorded manually; the app does not move money.
 
 ## Demo data and what it means
 
@@ -87,7 +91,10 @@ supabase/01_schema.sql        Tables, RLS rules and atomic DB booking constraint
 supabase/02_authorize_staff.sql Staff allowlisting sample
 supabase/03_public_availability.sql Additional public schedule RPC for existing online projects
 netlify/functions/notify-inquiry.mjs Optional email function via Resend
+netlify/functions/notify-booking.mjs Optional customer booking email via Resend
 supabase/04_inquiry_notifications.sql Private email status and server-only retry claim
+supabase/05_trace_booking_policy.sql Event details, advances, gaps, extensions, cancellation evidence and email status
+supabase/06_trace_spaces.sql Additive real TRACE venue catalog with illustrative rates
 src/inquiryNotifications.js   Notification response and timeout handling
 scripts/configure.mjs        Generate public config from deployment environment
 scripts/check-cloud.mjs      Opt-in staging concurrency and privacy check

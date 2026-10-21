@@ -2,15 +2,19 @@
 
 ## Core booking checks
 
-- [ ] Meeting Room A: confirmed 10:00–12:00. Create 11:00–13:00 → must reject.
-- [ ] Same room: book 12:00–13:00 → must accept (end/start boundary).
+- [ ] I Space: confirmed 10:00–12:00. Create 11:00–13:00 → must reject.
+- [ ] Same room: book 12:00–13:00 → turnover gap rejects; 13:00–14:00 accepts.
+- [ ] Use **Extend booking** for the same customer at 12:00 → a separate linked booking accepts.
+- [ ] Neo Hub: bookings shorter than four hours reject; another customer within four hours of its prior end rejects.
+- [ ] TRACE Idea Studio hotseat booking shorter than a day rejects.
+- [ ] Confirm an event-space booking with under 50% received → reject; record 50% and retry → accept.
 - [ ] Same time in another room → must accept.
 - [ ] Cancel 10:00–12:00 reservation, book 11:00–13:00 → should accept.
 - [ ] Edit an existing reservation to clash with another → must reject.
 - [ ] Archive a space → no new booking; existing booking remains visible.
 - [ ] Maintenance 15:00–17:00 → booking 16:00–18:00 must reject.
 - [ ] Create a maintenance period overlapping an active reservation → must reject.
-- [ ] Desk zone inventory 14: book 10 desks, overlapping book 4 → accept; overlapping book 1 more → reject.
+- [ ] Idea Studio demo inventory 12: book 9 desks, overlapping book 3 → accept; overlapping book 1 more → reject.
 - [ ] Desk durations can be billed daily, weekly or per 30 days.
 
 ## CRUD and public website
@@ -20,6 +24,9 @@
 - [ ] Add/edit customer; customer dropdown auto-populates contact fields.
 - [ ] Record partial payment, edit and complete reservation.
 - [ ] Submit inquiry via public form → visible to admin. Visitor cannot confirm booking directly.
+- [ ] Inquiry includes event nature, outside services and alcohol terms; staff sees all three when converting.
+- [ ] One customer can book another location via the booking details action.
+- [ ] Cancellation requires recorded call and official email; the fee stays in booking details.
 - [ ] Mark inquiry Contacted then convert to reservation.
 - [ ] Edit company phone, email and hours.
 - [ ] Download all four CSV exports.
@@ -33,6 +40,7 @@
 - [ ] Simultaneous overlapping bookings: database allows one and rejects the other.
 - [ ] Anon inquiry insert works without a select policy.
 - [ ] Optional email function works only when configured with private provider credentials.
+- [ ] Pending booking emails state that advance is required; after recording the advance, the confirmed email reaches the customer in their saved language.
 
 ## Inquiry email reliability
 

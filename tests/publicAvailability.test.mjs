@@ -31,8 +31,8 @@ test('public schedule exposes exact date/time to show collisions and desk availa
  const bookings=rows.filter(r=>r.kind==='booking').map(r=>({...r,status:'confirmed'}));
  const blocks=rows.filter(r=>r.kind==='blocked');
  assert.equal(availabilityFor(active,bookings,blocks,start,end,1).ok,false);
- assert.equal(availabilityFor(desk,bookings,blocks,start,end,1).ok,true);
- assert.equal(availabilityFor(desk,bookings,blocks,start,end,2).ok,false);
+ assert.equal(availabilityFor(desk,bookings,blocks,start,'2026-11-02T10:00:00Z',1).ok,true);
+ assert.equal(availabilityFor(desk,bookings,blocks,start,'2026-11-02T10:00:00Z',2).ok,false);
  assert.equal(availabilityFor(active,bookings,blocks,'2026-11-01T14:00:00Z','2026-11-01T15:00:00Z',1).ok,false);
 });
 test('previous and next day do not include nonoverlapping reservations',()=>{

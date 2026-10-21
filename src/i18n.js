@@ -55,6 +55,8 @@ export function translateError(message) {
   if (!message) return t('Something went wrong.');
   if (Object.hasOwn(messages, message)) return t(message);
   const patterns = [
+    [/^This space requires at least (\d+) hour\(s\)\.?$/, 'This space requires at least {count} hour(s).', 'count'],
+    [/^Time clash or turnover gap with (.+?)\.?$/, 'Time clash or turnover gap with {reference}.', 'reference'],
     [/^Choose between 1 and (\d+) unit\(s\)\.$/, 'Choose between 1 and {count} unit(s).', 'count'],
     [/^Only (\d+) desk\(s\) remain in that period\.$/, 'Only {count} desk(s) remain in that period.', 'count'],
     [/^Time clash with (.+?)\.?$/, 'Time clash with {reference}.', 'reference'],

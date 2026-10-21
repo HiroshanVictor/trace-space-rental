@@ -9,6 +9,7 @@ let cloudAuth=false;
 export const cloudEnabled=Boolean(config.supabaseUrl && config.supabaseAnonKey);
 export const isCloud=()=>cloudEnabled;
 export const inquiryEmailEnabled=()=>cloudEnabled && Boolean(config.notifyInquiryEndpoint);
+export const bookingEmailEnabled=()=>inquiryEmailEnabled();
 let localData;
 function readDemo(){
   try {const parsed=JSON.parse(localStorage.getItem(KEY)); if(parsed?.spaces && parsed?.bookings) return parsed;}catch(_){}
@@ -130,6 +131,20 @@ export async function submitInquiry(payload){
 export async function retryInquiryEmail(inquiryId){
   if(!inquiryEmailEnabled())return {status:'not_configured'};
   return notifyInquiry(config.notifyInquiryEndpoint,inquiryId);
+}
+export async function sendBookingConfirmation(bookingId){
+  if(!bookingEmailEnabled())return {status:'not_configured'};
+  const sup=await client();
+  const {data:{session}}=await sup.auth.getSession();
+  if(!session?.access_token)return {status:'failed'};
+  try{
+    const response=await fetch('/.netlify/functions/notify-booking',{
+      method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},
+      body:JSON.stringify({booking_id:bookingId}),signal:AbortSignal.timeout(12000)
+    });
+    const body=await response.json().catch(()=>null);
+    return response.ok&&body?.ok&&body.status==='sent'?{status:'sent'}:{status:response.status===503&&body?.code==='not_configured'?'not_configured':'failed'};
+  }catch{return {status:'pending'};}
 }
 export function demoReset(){if(cloudEnabled)throw Error('Reset is for demo mode only.');localData=makeSeed();saveDemo();}
 export async function currentUserEmail(){

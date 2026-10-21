@@ -1,15 +1,12 @@
-# 4-minute Hackathon demonstration (T2T)
+# TRACE demo flow (about 7 minutes)
 
-**1. The Excel problem (30 seconds):** "Trace Expert City used spreadsheets and phone calls. We need to prevent accidental double reservations."
+1. Open the site and switch English → Sinhala → Tamil using the language icon. Return to English.
+2. Open **Our Spaces**. Show Creator Space, Bay 07, Outdoor Space, TRACE Idea Studio, I Space, Neo Hub and The Third Place Lobby. Explain that prices are labeled demo estimates, pending TRACE approval.
+3. Open **Availability calendar**. Select a venue and date. Explain that customer details are private and public requests do not reserve time.
+4. Send a public inquiry. Enter customer contacts, preferred period, event nature, external services and alcohol plan. Show the saved confirmation. No account is needed.
+5. Open **Staff → Open demo dashboard**. In **Customer Inquiries**, review that request and convert it to a pending booking. Explain that TRACE management sells and approves the event.
+6. Record an advance in the booking form, then mark the booking confirmed. Event spaces use 50% demo advance; other spaces use 25% pending management approval. In cloud mode with email configured, the saved booking email is sent to the customer immediately. In local demo mode, email is not sent.
+7. Attempt another booking for the same space during the booking or its turnover gap. Show the rejected conflict. Use **Extend booking** to make a separate contiguous booking for the same customer. Use **Book another location** to start a booking at another venue.
+8. Show cancellation: customer calls, sends an official email, then staff record both in the cancellation form. Any fee and refund are handled manually. Finish with payment records and reports.
 
-**2. Manage spaces (45 seconds):** Staff portal → Spaces Management → Add Space. Enter name, category, capacity, amenities, rates. Show Edit, Archive, Restore and Delete for unused spaces. Desk Zone supports multiple desk units.
-
-**3. Show calendar + first reservation (60 seconds):** Open Availability Calendar, pick tomorrow, click on a free meeting room slot and create a confirmed booking. Add customer details and save. Show a successful confirmation.
-
-**4. Show the critical conflict test (60 seconds):** Create a second booking on the *same meeting room* during an overlapping time. Show the clear "Time clash" rejection. Then create a booking starting exactly when the first ends; it succeeds. Mention desk inventory: if 14 desks exist, booking 12 and then 3 in the same period must be refused.
-
-**5. Public inquiry (30 seconds):** Open Public Website → Our Spaces → Inquire. Submit a name, phone, email, preferred dates and a message. Back in the staff portal, Inquiries → Convert to booking (checks clashes again).
-
-**6. Business extras (15 seconds):** Show manual payments, maintenance time blocks, reports and CSV download. Explain that the simple demo is local browser storage; shared online use requires Supabase, included in the package.
-
-**Judging tip:** Demonstrate an actual rejected overlap — this is the non-negotiable functionality from the PowerPoint.
+For a repeatable local demo, go to **Settings → Reset demo** first if the browser contains older sample records. That action replaces browser-local changes. For shared cloud use, run migrations 03–06 as applicable before the demo.

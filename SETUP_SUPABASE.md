@@ -3,7 +3,7 @@
 **These steps are optional for the quick hackathon demo**. Follow them before using this website on multiple devices or collecting live inquiries.
 
 1. Create a Supabase project at https://supabase.com/dashboard/. Keep your database password private.
-2. Go to **SQL Editor** → **New query**. Run `supabase/01_schema.sql`, then `supabase/04_inquiry_notifications.sql`, as project owner. The main schema creates `spaces`, `bookings`, `inquiries`, `blackouts`, `customers`, `org_settings`, and `staff_accounts` with RLS permissions and transactional booking guards. The notification migration adds private email status and a server-only send claim. The main script also adds illustrative venues.
+2. Go to **SQL Editor** → **New query**. Run the *contents* of `supabase/01_schema.sql`, `supabase/04_inquiry_notifications.sql`, `supabase/05_trace_booking_policy.sql`, and `supabase/06_trace_spaces.sql`, in that order, as project owner. Paste SQL code, not a filename. The main schema creates the tables and RLS; the later scripts add notification tracking, TRACE booking rules and venue records.
 3. Go to **Authentication → Users → Add user**. Enter your own staff email and choose a strong password. Confirm the email if needed. For multiple staff, create each person separately (do not share passwords).
 4. Open `supabase/02_authorize_staff.sql`, replace `REPLACE_WITH_YOUR_STAFF_EMAIL@example.com` with the **real account email**, and run the script in the SQL Editor. Repeat for other approved staff accounts.
 5. In Supabase go to **Project Settings → API** (exact labels may differ). Copy **Project URL** and the **publishable/anon key**. NEVER copy a **service_role / secret key** into the browser.
@@ -17,6 +17,8 @@
    ```
 7. Serve the folder at localhost using `python -m http.server 5173`, or deploy the entire project to Netlify. Test public inquiry submission and staff login. The staff portal must ask for your credentials.
 8. Sign in, test a normal booking and then attempt to book the **same meeting room** for an overlapping period. The second save must be refused. Repeat from two browsers if you can. The database also checks concurrent submissions under a per-space row lock.
+
+For the existing `t2t group1` project, first check Table Editor for `spaces`, `bookings`, `inquiries` and `staff_accounts`. If present, keep its existing data and run only missing migrations in order: `03_public_availability.sql` (if calendar RPC is missing), `04_inquiry_notifications.sql`, `05_trace_booking_policy.sql`, then optional `06_trace_spaces.sql`. The last script adds venues only when names are missing; it does not replace old venues or bookings. Archive old sample venues through the staff portal after reviewing them. Redeploy Netlify after running migrations. The new public inquiry and staff booking forms require migration 05.
 
 ## Configure Netlify from environment variables
 
@@ -67,6 +69,8 @@ In **Inquiries → Details**, staff can see email status, attempts and the last 
 
 Never put the service-role key or mail provider secret in `config.js` or commit either to Git. For public production traffic, protect new inquiry creation with appropriate abuse controls. Stored inquiries remain the authoritative request record; an accepted email does not guarantee inbox delivery.
 
+The same email environment also enables `netlify/functions/notify-booking.mjs`. Staff create a pending booking or record an advance and confirm it; the app then asks the function to email the saved booking to the customer immediately. The email reads the saved record server-side, requires an authenticated allowlisted staff token, and explains whether the reservation is still awaiting advance payment. Failed customer emails remain visible on the booking details screen for staff retry. Provider acceptance is recorded; inbox delivery and bounces still need an inbox check. Run migration 05 before testing customer booking email.
+
 ## Verify the shared workflow against staging
 
 Apply the main schema and notification migration, and create an allowlisted **staging** staff account. In PowerShell, set these process environment variables without committing their values:
@@ -80,7 +84,7 @@ $env:CLOUD_CHECK_ALLOW_WRITES = '1'
 npm run check:cloud
 ```
 
-The check creates a uniquely named temporary venue, makes two simultaneous conflicting reservations, and requires exactly one to succeed. It also checks adjacent bookings, anonymous inquiry submission, staff visibility, private-record protection, the server-only notification claim, and the privacy-safe public schedule. It deletes only its own generated records in a `finally` block. If cleanup fails, it reports the exact test record IDs for removal. It does not invoke email delivery.
+The check creates a uniquely named temporary venue, makes two simultaneous conflicting reservations, and requires exactly one to succeed. It also checks that an immediate next booking fails the turnover gap and one starting after the gap succeeds. Anonymous inquiry submission, staff visibility, private-record protection, the server-only notification claim, and the privacy-safe public schedule are checked too. It deletes only its own generated records in a `finally` block. If cleanup fails, it reports the exact test record IDs for removal. It does not invoke email delivery.
 
 Without the staging settings and explicit write flag, the check exits before making requests. Live email delivery still needs one deliberate end-to-end submission and inbox verification after deployment.
 
@@ -90,7 +94,7 @@ Payments are recorded manually (amount received and status). No actual charges a
 
 ## Operations checklist
 
-- [ ] Replace sample prices, capacities, venue names, amenities and rules with real information.
+- [ ] Confirm demo price estimates, Bay 07 capacity/equipment, TRACE Idea Studio hotseat count, venue conditions, payment deadline and cancellation penalties with management.
 - [ ] Verify staff accounts and revoke departed staff using `staff_accounts` and Supabase Auth.
 - [ ] Confirm your company's opening hours and cancellation policy.
 - [ ] Check double-bookings from two browser sessions.

@@ -1,0 +1,14 @@
+// Published venue names and capacities: https://tracesrilanka.lk/trace-spaces
+// All prices are illustrative demo estimates. Bay 07 capacity is also an estimate.
+export function realSpaces(imageSet) {
+  const common='Management approval is required for the event, external services and alcohol. Food is not provided; alcohol may be brought with approval but cannot be sold.';
+  return [
+    {id:'space-creator',name:'Creator Space',type:'meeting',capacity:50,inventory_count:1,amenities:'A/C, Sound system, FM microphone, Lectern, Whiteboard, Projector',rate_hour:8000,rate_day:45000,rate_week:0,rate_month:0,description:'Weekday space for workshops, training and meetings.',conditions:`Weekdays only. Equipment included. ${common}`,image_url:imageSet.training},
+    {id:'space-bay07',name:'Bay 07',type:'meeting',capacity:40,inventory_count:1,amenities:'Wi-Fi, A/C, Projector',rate_hour:6500,rate_day:36000,rate_week:0,rate_month:0,description:'Demo training and mentorship venue. Capacity and equipment need confirmation from TRACE.',conditions:common,image_url:imageSet.training},
+    {id:'space-outdoor',name:'Outdoor Space',type:'auditorium',capacity:700,inventory_count:1,amenities:'Power, Security, Cleaning, Electrician, Chiller operation, Supervisor',rate_hour:35000,rate_day:200000,rate_week:0,rate_month:0,description:'Weekend open-air venue for festivals, concerts and large gatherings.',conditions:`Weekends only. ${common}`,image_url:imageSet.auditorium},
+    {id:'space-idea',name:'TRACE Idea Studio',type:'desk',capacity:1,inventory_count:12,amenities:'Wi-Fi, Charging, A/C',rate_hour:0,rate_day:2200,rate_week:12000,rate_month:39000,description:'Demo hotseats for innovators and entrepreneurs. The published studio supports groups of 10–15.',conditions:'Minimum one day. Whole-studio events require a separate arrangement with TRACE management.',image_url:imageSet.desk},
+    {id:'space-ispace',name:'I Space',type:'meeting',capacity:35,inventory_count:1,amenities:'Wi-Fi, A/C, Projector, Microphone',rate_hour:6000,rate_day:34000,rate_week:0,rate_month:0,description:'Flexible room for workshops, presentations and team meetings.',conditions:common,image_url:imageSet.meeting},
+    {id:'space-neohub',name:'Neo Hub',type:'auditorium',capacity:70,inventory_count:1,amenities:'Wi-Fi, A/C, Projector, Microphone',rate_hour:12000,rate_day:70000,rate_week:0,rate_month:0,description:'Event venue for seminars, networking and launches.',conditions:common,image_url:imageSet.auditorium},
+    {id:'space-lobby',name:'The Third Place Lobby',type:'meeting',capacity:20,inventory_count:1,amenities:'Wi-Fi, A/C',rate_hour:5000,rate_day:28000,rate_week:0,rate_month:0,description:'Welcoming venue for informal meetups and networking.',conditions:common,image_url:imageSet.meeting}
+  ].map(space=>({...space,is_active:true,created_at:new Date().toISOString()}));
+}
