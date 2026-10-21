@@ -1,14 +1,22 @@
 import {quoteBooking} from './engine.js';
 import {realSpaces} from './realSpaces.js';
+import {venueImages} from './venueImages.js';
 const id = prefix => `${prefix}-${Math.random().toString(36).slice(2,10)}`;
 const plus = (days, hours=0) => {
   const d=new Date(); d.setHours(hours,0,0,0); d.setDate(d.getDate()+days); return d.toISOString();
 };
 export const imageSet = {
-  meeting:'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1100&auto=format&fit=crop&q=85',
-  training:'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1100&auto=format&fit=crop&q=85',
-  auditorium:'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=1100&auto=format&fit=crop&q=85',
-  desk:'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1100&auto=format&fit=crop&q=85',
+  meeting:venueImages['Meeting Room A'],
+  training:venueImages['Creator Space'],
+  auditorium:venueImages['Grand Auditorium'],
+  desk:venueImages['Co-working Desk Zone'],
+  creator:venueImages['Creator Space'],
+  bay07:venueImages['Bay 07'],
+  outdoor:venueImages['Outdoor Space'],
+  idea:venueImages['TRACE Idea Studio'],
+  ispace:venueImages['I Space'],
+  neohub:venueImages['Neo Hub'],
+  lobby:venueImages['The Third Place Lobby'],
 };
 export function makeSeed(){
   const spaces=realSpaces(imageSet);
