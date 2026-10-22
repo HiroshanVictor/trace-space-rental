@@ -1,11 +1,12 @@
 import {initLanguage,setLanguage,getLanguage,locale,t,labelFor,translateError} from './i18n.js';
 import {languageSelector,captureForms,restoreForms,localizeValidation} from './languageUI.js';
 import {spaceText,companyAbout} from './spaceContent.js';
-import {init,load,loadPublicSchedule,signIn,signOut,save,remove,submitInquiry,retryInquiryEmail,inquiryEmailEnabled,sendBookingConfirmation,bookingEmailEnabled,demoReset,isCloud,currentUserEmail} from './store.js';
+import {init,load,loadPublicSchedule,loadPublicSpaceActivity,signIn,signOut,save,remove,submitInquiry,retryInquiryEmail,inquiryEmailEnabled,sendBookingConfirmation,bookingEmailEnabled,demoReset,isCloud,currentUserEmail} from './store.js';
 import {safeHtml as h,quoteBooking,availabilityFor,intersects,csv,rateForSpace,advanceRequired,minimumHours,turnoverHours} from './engine.js';
 import {imageSet} from './data.js';
 import {venueImageFor} from './venueImages.js';
 import {localDay,shiftDay} from './publicAvailability.js';
+import {rankSpaceActivity} from './publicActivity.js';
 
 const ICONS={
   dashboard:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
@@ -43,7 +44,7 @@ function changeLanguage(code){
 const adminRoutes=['dashboard','manage-spaces','bookings','calendar','inquiries','customers','blackouts','reports','settings'];
 const routeTitles=()=>({'dashboard':t("Dashboard"),'manage-spaces':t("Spaces Management"),'bookings':t("Reservations"),'calendar':t("Availability Calendar"),'inquiries':t("Customer Inquiries"),'customers':t("Customers"),'blackouts':t("Unavailability & Maintenance"),'reports':t("Reports & Exports"),'settings':t("Company Settings")});
 const navItems=[['dashboard','dashboard'],['manage-spaces','spaces'],['calendar','calendar'],['bookings','bookings'],['inquiries','inquiries'],['customers','customers'],['blackouts','block'],['reports','report'],['settings','settings']];
-const state={admin:false,route:'home',data:null,modal:null,search:'',type:'all',status:'all',calendarDay:localDay(),publicDay:localDay(),publicEvents:[],publicLoadedDay:null,publicLoading:false,publicError:'',publicSpaceId:'all',bookingActivityFilter:'popular',activeInquiryDay:'',menu:false,assistantOpen:false,inquiryTermsAccepted:false,loading:true,authError:'',activeInquirySpace:'',toast:null};
+const state={admin:false,route:'home',data:null,modal:null,search:'',type:'all',status:'all',calendarDay:localDay(),publicDay:localDay(),publicEvents:[],publicLoadedDay:null,publicLoading:false,publicError:'',publicSpaceId:'all',publicActivity:[],publicActivityLoading:true,publicActivityError:'',bookingActivityFilter:'popular',activeInquiryDay:'',menu:false,assistantOpen:false,inquiryTermsAccepted:false,loading:true,authError:'',activeInquirySpace:'',toast:null};
 function updatePublicHeader(){document.documentElement.classList.toggle('public-nav-scrolled',window.scrollY>42)}
 function compactPublicCalendar(){
  if(state.route!=='availability')return;
@@ -86,15 +87,6 @@ const imageUrl=x=>{try{const value=String(x||'').trim();if(value.startsWith('/')
 const spaceImage=s=>`background-image:linear-gradient(145deg,#071a3030,#071a3000),url('${imageUrl(venueImageFor(s)||imageSet[s?.type]||imageSet.meeting)}'),radial-gradient(circle at 75% 20%,#f2d09c66 0%,transparent 42%),linear-gradient(135deg,#91a8bd,#d0d9df 50%,#71879c)`;
 const traceMark=()=>'<img class="trace-logo" src="./public/assets/trace-logo.png" alt="TRACE">';
 const realVenueOrder=['Creator Space','Bay 07','Outdoor Space','TRACE Idea Studio','I Space','Neo Hub','The Third Place Lobby'];
-const mockBookingActivity=[
- {name:'I Space',bookings:18,latest:'2026-10-21'},
- {name:'Creator Space',bookings:15,latest:'2026-10-20'},
- {name:'Neo Hub',bookings:12,latest:'2026-10-22'},
- {name:'TRACE Idea Studio',bookings:10,latest:'2026-10-19'},
- {name:'Bay 07',bookings:8,latest:'2026-10-18'},
- {name:'Outdoor Space',bookings:6,latest:'2026-10-17'},
- {name:'The Third Place Lobby',bookings:5,latest:'2026-10-16'}
-];
 const publicSpaceOrder=spaces=>[...spaces].sort((a,b)=>{const ai=realVenueOrder.indexOf(a.name),bi=realVenueOrder.indexOf(b.name);return (ai<0?999:ai)-(bi<0?999:bi)});
 const rateOf=s=>{
  const price=s.type==='desk'?(Number(s.rate_day)>0?`${money(s.rate_day)} <small>/ ${t("day")}</small>`:`${money(s.rate_month)} <small>/ ${t("month")}</small>`):(Number(s.rate_hour)>0?`${money(s.rate_hour)} <small>/ ${t("hour")}</small>`:`${money(s.rate_day)} <small>/ ${t("day")}</small>`);
@@ -106,7 +98,9 @@ async function refresh(){state.data=await load(state.admin)}
 async function navigate(route){
  if(adminRoutes.includes(route)&&!state.admin){route='login'}
  if(route==='request')state.inquiryTermsAccepted=false;
- state.route=route;state.modal=null;state.menu=false;state.search='';state.status='all';state.type='all';history.replaceState(null,'','#'+route);render();window.scrollTo(0,0);if(route==='availability')await refreshPublicCalendar();
+ state.route=route;state.modal=null;state.menu=false;state.search='';state.status='all';state.type='all';history.replaceState(null,'','#'+route);render();window.scrollTo(0,0);
+ if(route==='availability')await refreshPublicCalendar();
+ if(route==='home')await refreshPublicActivity();
 }
 async function checkInquiryAvailability(form,button){
  const out=form.querySelector('.inquiry-availability-result'),f=getPayload(form),space=findSpace(f.space_id),start=f.start_at,end=f.end_at;
@@ -134,6 +128,14 @@ async function refreshPublicCalendar(){
  }catch(err){if(day===state.publicDay){state.publicError=err.message;state.publicEvents=[];}}
  finally{if(day===state.publicDay){state.publicLoading=false;if(state.route==='availability')render();}}
 }
+async function refreshPublicActivity(){
+ state.publicActivityLoading=true;
+ state.publicActivityError='';
+ if(state.route==='home')render();
+ try{state.publicActivity=await loadPublicSpaceActivity()}
+ catch(err){state.publicActivity=[];state.publicActivityError=err.message;console.error(err)}
+ finally{state.publicActivityLoading=false;if(state.route==='home')render()}
+}
 function pageHeading(title,subtitle,actions=''){return `<div class="page-heading"><div><h1>${title}</h1><p>${subtitle}</p></div><div class="actions">${actions}</div></div>`}
 function empty(text=t("No records found."),emoji='☁️'){return `<div class="empty"><div class="empty-icon">${emoji}</div><strong>${text}</strong><span>${t("Try another filter or create a new record.")}</span></div>`}
 function topbar(){return `<header class="topbar"><div class="actions"><button class="btn ghost mini mobile-menu" data-action="menu" aria-label="${h(t('Open navigation'))}">${ic('menu')}</button><span class="topbar-heading">${routeTitles()[state.route]||t("Space Rental")}</span></div><div class="topbar-right">${languageSelector()}<span class="today">${new Date().toLocaleDateString(locale(),{weekday:'short',day:'numeric',month:'long',year:'numeric'})}</span><button class="btn ghost mini" data-go="home">${ic('arrow')} ${t("Public website")}</button><div class="avatar">TEC</div></div></header>`}
@@ -146,14 +148,22 @@ function spaceCardPublic(s){return `<article class="public-card catalog-live-car
 function homePublicLegacy(){let spaces=publicSpaceOrder(state.data.spaces.filter(s=>s.is_active));return `<div class="public-page"><section class="hero">${headerPublic(false)}<div class="hero-content"><div class="hero-location">TRACE EXPERT CITY · MARADANA, COLOMBO</div><div class="eyebrow">${t("SPACE FOR YOUR NEXT BIG IDEA")}</div><h1>${t("Better spaces.")}<br>${t("Brighter possibilities.")}</h1><p>${t("From focused meetings and hands-on workshops to memorable events and flexible desks. Discover the right setting at Trace Expert City.")}</p><div class="hero-actions"><button data-go="catalog" class="btn orange">${t("Explore spaces")} ${ic('arrow')}</button><button data-go="availability" class="btn ghost" style="background:#ffffff22;color:white;border-color:#ffffff55">${ic('calendar')} ${t("View booked times")}</button></div></div></section><section class="public-section"><div class="section-intro"><div><div class="eyebrow">${t("OUR COLLECTION")}</div><h2>${t("A space for every occasion")}</h2><p>${t("Explore thoughtfully prepared venues with flexible options for individuals, teams and events.")}</p></div><button class="btn ghost" data-go="catalog">${t("View all spaces")} ${ic('arrow')}</button></div><div class="public-cards">${spaces.slice(0,3).map(spaceCardPublic).join('')||empty(t("No active spaces yet"))}</div></section><section class="feature-band"><div class="feature-inner"><div class="feature"><div class="feature-icon">◉</div><h3>${t("Spaces for every scale")}</h3><p>${t("Meeting and training rooms, a spacious auditorium, or desks for everyday work.")}</p></div><div class="feature"><div class="feature-icon">▦</div><h3>${t("Clear availability")}</h3><p>${t("See booked venues and occupied times before sending your inquiry.")}</p><button class="tiny-link" data-go="availability">${t("Open public calendar →")}</button></div><div class="feature"><div class="feature-icon">✓</div><h3>${t("Easy inquiry process")}</h3><p>${t("Tell us what you need and our staff will follow up to arrange your booking.")}</p></div></div></section>${footerPublic()}</div>`}
 function liveTiles(spaces){const priority=['Grand Auditorium','Bay 07','Creator Space','Outdoor Space'],featured=[...priority.map(name=>spaces.find(s=>s.name===name)),...spaces].filter((s,index,list)=>s&&list.indexOf(s)===index).slice(0,4);return `<section class="live-tiles-section"><div class="live-tiles-heading"><div><div class="eyebrow">POPULAR SPACES</div><h2>Find a space that moves with your idea.</h2><p>Explore a curated selection of meeting rooms, event settings and flexible desks at TRACE Expert City.</p></div><button class="btn ghost" data-go="catalog">${t("View all spaces")} ${ic('arrow')}</button></div><div class="live-tiles-grid">${featured.map((s,index)=>`<article class="live-tile tile-${index+1} ${s.name==='Grand Auditorium'?'grand-auditorium-tile':''} ${s.name==='Bay 07'?'bay-seven-tile':''}" style="${spaceImage(s)}"><div class="live-tile-shade"></div><div class="live-tile-top"><span>${s.name==='Grand Auditorium'?'SIGNATURE EVENT VENUE':s.name==='Bay 07'?'BAY 07 · TRAINING & IDEAS':typeLabel(s.type)}</span><i>${s.name==='Grand Auditorium'?'Grand scale':s.name==='Bay 07'?'Live tile':'Featured'}</i></div><div class="live-tile-copy"><h3>${h(spaceText(s))}</h3><p>${s.type==='desk'?`${s.inventory_count} desks available`:`Up to ${s.capacity} people`} · ${h((spaceText(s,'amenities')||'Wi-Fi').split(',')[0])}</p><div><strong>${rateOf(s)}</strong><button data-action="public-request" data-id="${h(s.id)}">${t("Inquire")} ${ic('arrow')}</button></div></div></article>`).join('')}</div></section>`}
 function frequentBookingSpaces(spaces){
- const activity=mockBookingActivity
-  .map(record=>({...record,space:spaces.find(space=>space.name===record.name)}))
-  .filter(record=>record.space);
- activity.sort((a,b)=>state.bookingActivityFilter==='popular'
-  ?b.bookings-a.bookings||b.latest.localeCompare(a.latest)
-  :b.latest.localeCompare(a.latest)||b.bookings-a.bookings);
+ const activity=rankSpaceActivity(spaces,state.publicActivity,state.bookingActivityFilter);
  const tabs=[['popular','Popular'],['latest','Latest bookings']];
- return `<section class="frequent-bookings"><div class="frequent-bookings-heading"><div><div class="eyebrow">BOOKING TRENDS</div><h2>Frequently booked spaces</h2><p>Browse spaces ranked by sample booking popularity or by their most recent sample booking.</p></div><span class="frequent-bookings-note">Sample data · not live bookings</span></div><div class="catalog-filter" role="group" aria-label="Filter booking trends">${tabs.map(([filter,label])=>`<button class="filter-pill ${state.bookingActivityFilter===filter?'selected':''}" data-action="booking-activity-filter" data-value="${filter}" aria-pressed="${state.bookingActivityFilter===filter}">${label}</button>`).join('')}</div><div class="public-cards">${activity.slice(0,4).map(record=>`<article class="public-card frequent-booking-card"><div class="space-cover catalog-tile-image" style="${spaceImage(record.space)}"><span>${typeLabel(record.space.type)}</span><i>${state.bookingActivityFilter==='popular'?`${record.bookings} sample bookings`:'Recent sample booking'}</i></div><div class="space-body"><div class="eyebrow" style="font-size:.65rem">${state.bookingActivityFilter==='popular'?`${record.bookings} sample bookings`:`Latest · ${new Date(`${record.latest}T00:00:00`).toLocaleDateString(locale(),{day:'numeric',month:'short'})}`}</div><h3>${h(spaceText(record.space))}</h3><p>${h(spaceText(record.space,'description')||t("A thoughtful environment for productive work."))}</p><div class="pub-foot"><strong class="space-price">${rateOf(record.space)}</strong><button data-action="public-request" data-id="${h(record.space.id)}" class="btn mini">${t("Inquire")} ${ic('arrow')}</button></div></div></article>`).join('')||empty(t("No active spaces yet"))}</div></section>`;
+ const records=activity.slice(0,4).map(record=>{
+  const description=state.bookingActivityFilter==='popular'
+   ?`${record.booking_count.toLocaleString(locale())} booking${record.booking_count===1?'':'s'}`
+   :record.latest_booking_at
+    ?`Latest · ${new Date(record.latest_booking_at).toLocaleDateString(locale(),{day:'numeric',month:'short',year:'numeric'})}`
+    :'No bookings yet';
+  return `<article class="public-card frequent-booking-card"><div class="space-cover catalog-tile-image" style="${spaceImage(record.space)}"><span>${typeLabel(record.space.type)}</span><i>${h(description)}</i></div><div class="space-body"><div class="eyebrow" style="font-size:.65rem">${h(description)}</div><h3>${h(spaceText(record.space))}</h3><p>${h(spaceText(record.space,'description')||t("A thoughtful environment for productive work."))}</p><div class="pub-foot"><strong class="space-price">${rateOf(record.space)}</strong><button data-action="public-request" data-id="${h(record.space.id)}" class="btn mini">${t("Inquire")} ${ic('arrow')}</button></div></div></article>`;
+ }).join('');
+ const content=state.publicActivityLoading
+  ?'<div class="activity-message" role="status">Loading booking activity…</div>'
+  :state.publicActivityError
+   ?`<div class="activity-message activity-error" role="alert"><span>Booking activity could not be loaded.</span><small>${h(state.publicActivityError)}</small><button class="btn ghost mini" data-action="refresh-public-activity">Try again</button></div>`
+   :records||'<div class="activity-message">No booking activity is available yet.</div>';
+ return `<section class="frequent-bookings"><div class="frequent-bookings-heading"><div><div class="eyebrow">BOOKING TRENDS</div><h2>Frequently booked spaces</h2><p>See TRACE spaces ranked by booking frequency or the date of their most recent booking.</p></div>${isCloud()?'':'<span class="frequent-bookings-note">Local demo data</span>'}</div><div class="catalog-filter" role="group" aria-label="Filter booking trends">${tabs.map(([filter,label])=>`<button class="filter-pill ${state.bookingActivityFilter===filter?'selected':''}" data-action="booking-activity-filter" data-value="${filter}" aria-pressed="${state.bookingActivityFilter===filter}">${label}</button>`).join('')}</div><div class="public-cards">${content}</div></section>`;
 }
 function campusStory(spaces){const desks=spaces.find(s=>s.type==='desk')||spaces[0],gather=spaces.find(s=>s.type==='auditorium')||spaces[1]||spaces[0],meeting=spaces.find(s=>s.type==='meeting')||spaces[0];return `<section class="campus-story"><div class="campus-story-copy"><div class="eyebrow">TRACE EXPERT CITY · MARADANA, COLOMBO</div><h2>A restored campus made for work, learning and gathering.</h2><p>Choose a focused meeting room, a flexible co-working desk or a setting for your next large event. Every inquiry is reviewed by the TRACE team so the space, schedule and requirements fit together.</p><div class="campus-notes"><span><b>${spaces.length}</b> active spaces to explore</span><span><b>${meeting.capacity}+</b> people in our larger rooms</span><span><b>One team</b> to confirm your booking</span></div><div class="campus-actions"><button class="btn dark" data-go="catalog">${t("Explore spaces")} ${ic('arrow')}</button><button class="text-button" data-go="availability">${ic('calendar')} ${t("View booked times")}</button></div></div><div class="campus-story-images"><div class="story-image story-large" style="${spaceImage(desks)}"><span>Flexible workspaces</span></div><div class="story-image story-small" style="${spaceImage(gather)}"><span>Ideas in motion</span></div></div></section><section class="planning-band"><div><div class="eyebrow">A SIMPLE WAY TO PLAN</div><h2>Tell us what you are making space for.</h2></div><div class="planning-steps"><article><span>01</span><h3>Choose a setting</h3><p>Browse spaces by the kind of work, event or session you are planning.</p></article><article><span>02</span><h3>Check the day</h3><p>Use the public calendar to see occupied times before you send your request.</p></article><article><span>03</span><h3>Plan together</h3><p>Our team confirms availability and follows up on your event details.</p></article></div><button class="btn orange" data-action="public-request" data-id="${h(meeting.id)}">${t("Book an enquiry")} ${ic('arrow')}</button></section>`}
 function homePublic(){const spaces=publicSpaceOrder(state.data.spaces.filter(s=>s.is_active)),page=homePublicLegacy(),start=page.indexOf('<section class="public-section">'),end=page.indexOf('</section><section class="feature-band">',start);return start<0||end<0?page:page.slice(0,start)+frequentBookingSpaces(spaces)+liveTiles(spaces)+campusStory(spaces)+page.slice(end+10)}
@@ -316,6 +326,7 @@ async function clickAction(target){
   if(['popular','latest'].includes(target.dataset.value)){state.bookingActivityFilter=target.dataset.value;render()}
   return;
  }
+ if(act==='refresh-public-activity'){await refreshPublicActivity();return}
  if(act==='close-inquiry-terms'){
   const forms=captureForms(app);state.modal=null;render();restoreForms(app,forms);return;
  }
@@ -489,6 +500,6 @@ updatePublicHeader();
 render();
 (async()=>{
  try{
-   const result=await init();state.admin=result.admin;await refresh();let route=location.hash.replace('#','')||'home';if(!['home','catalog','request','availability','login',...adminRoutes].includes(route))route='home';if(adminRoutes.includes(route)&&!state.admin)route='login';state.route=route;render();if(route==='availability')await refreshPublicCalendar();
+   const result=await init();state.admin=result.admin;await refresh();let route=location.hash.replace('#','')||'home';if(!['home','catalog','request','availability','login',...adminRoutes].includes(route))route='home';if(adminRoutes.includes(route)&&!state.admin)route='login';state.route=route;render();if(route==='availability')await refreshPublicCalendar();if(route==='home')await refreshPublicActivity();
  }catch(err){console.error(err);state.startupError=err.message;render();}
 })();
