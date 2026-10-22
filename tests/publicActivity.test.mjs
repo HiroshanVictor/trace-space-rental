@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {rankSpaceActivity,summarizeSpaceActivity} from '../src/publicActivity.js';
+import {rankSpaceActivity,summarizeBookingCounts,summarizeSpaceActivity} from '../src/publicActivity.js';
 
 const spaces=[
   {id:'a',name:'Alpha',is_active:true},
@@ -30,4 +30,17 @@ test('local demo aggregates non-cancelled bookings without exposing booking deta
   ]);
   assert.deepEqual(result,[{space_id:'a',booking_count:2,latest_booking_at:'2026-10-11T12:00:00Z'},{space_id:'b',booking_count:0,latest_booking_at:null}]);
   assert.equal(JSON.stringify(result).includes('private@example.test'),false);
+});
+
+test('booking totals count active statuses by creation month and year',()=>{
+  const now=new Date('2026-10-22T12:00:00Z');
+  const counts=summarizeBookingCounts([
+    {status:'pending',created_at:'2026-10-01T00:00:00Z'},
+    {status:'confirmed',created_at:'2026-10-22T00:00:00Z'},
+    {status:'completed',created_at:'2026-01-03T00:00:00Z'},
+    {status:'confirmed',created_at:'2025-12-31T23:59:59Z'},
+    {status:'cancelled',created_at:'2026-10-15T00:00:00Z'},
+    {status:'completed',created_at:'not-a-date'}
+  ],now);
+  assert.deepEqual(counts,{total:5,month:2,year:3});
 });

@@ -3,10 +3,7 @@ import {getLanguage,languages,t} from './i18n.js';
 
 export function languageSelector({compact=false} = {}) {
   const current=languages.find(language=>language.code===getLanguage());
-  const icon=compact
-    ? '<path d="m5 8 6 6m-7 0 6-6M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/>'
-    : '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a17 17 0 0 1 0 18 17 17 0 0 1 0-18"/>';
-  return `<label class="language-switcher${compact?' language-switcher-compact':''}" title="${h(t('Language'))}: ${h(current.name)}"><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icon}</svg><span class="sr-only">${h(t('Language'))}</span><select data-language lang="${current.code}" translate="no" aria-label="${h(t('Language'))}">${languages.map(({code,name}) => `<option lang="${code}" value="${code}" ${getLanguage() === code ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`;
+  return `<div class="language-switcher${compact?' language-switcher-compact':''}" role="group" aria-label="${h(t('Language'))}" title="${h(t('Language'))}: ${h(current.name)}">${languages.map(({code,name}) => `<button type="button" data-language="${code}" lang="${code}" translate="no" aria-pressed="${getLanguage()===code}">${name}</button>`).join('')}</div>`;
 }
 
 // A language change must preserve an inquiry or reservation the user is editing.

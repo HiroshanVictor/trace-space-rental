@@ -1,7 +1,7 @@
 import {makeSeed,id} from './data.js';
 import {availabilityFor,validateBooking,validateSpace,intersects} from './engine.js';
 import {dayBounds,publicFromRecords} from './publicAvailability.js';
-import {summarizeSpaceActivity} from './publicActivity.js';
+import {summarizeBookingCounts,summarizeSpaceActivity} from './publicActivity.js';
 import {notifyInquiry} from './inquiryNotifications.js';
 const KEY='tec-spacerental-v2';
 const config=window.SPACE_RENTAL_CONFIG||{};
@@ -90,6 +90,18 @@ export async function loadPublicSpaceActivity(){
     booking_count:Number(row.booking_count||0),
     latest_booking_at:row.latest_booking_at||null
   }));
+}
+export async function loadPublicBookingCounts(){
+  if(!cloudEnabled)return summarizeBookingCounts(localData.bookings);
+  const sup=await client();
+  const {data,error}=await sup.rpc('public_booking_counts');
+  if(error)throw Error(`Booking totals could not load: ${error.message}. Run supabase/11_public_space_activity.sql in the SQL Editor.`);
+  const row=Array.isArray(data)?data[0]:data;
+  return {
+    total:Number(row?.total_bookings||0),
+    month:Number(row?.monthly_bookings||0),
+    year:Number(row?.yearly_bookings||0)
+  };
 }
 function localSave(table,method,payload,idValue){
   if(table==='org_settings'){localData.settings={...localData.settings,...payload};saveDemo();return clone(localData.settings);}
