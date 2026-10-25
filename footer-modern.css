@@ -10,10 +10,10 @@
 .footer-brand .brand-location{color:#f5bc7e;font-size:.66rem;letter-spacing:.12em}
 .footer-brand>p{max-width:390px;margin:16px 0 20px;color:#b9c9db;font-size:.87rem;line-height:1.8}
 .footer-socials{display:flex;gap:10px}
-.footer-socials a{display:grid;place-items:center;width:42px;height:42px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.07);color:#edf5ff;transition:transform .2s ease,background .2s ease,border-color .2s ease,color .2s ease}
+.footer-socials a{display:grid;place-items:center;width:44px;height:44px;border:1px solid rgba(255,255,255,.42);border-radius:14px;background:rgba(255,255,255,.13);color:#fff;transition:transform .2s ease,background .2s ease,border-color .2s ease,color .2s ease}
 .footer-socials a:hover{transform:translateY(-3px);border-color:rgba(244,174,104,.7);background:#f2ab65;color:#142a43}
-.footer-socials svg{width:19px;height:19px;fill:currentColor;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.footer-socials a:nth-child(2) svg{fill:none}
+.footer-socials svg{display:block;width:22px;height:22px;fill:currentColor;stroke:none}
+.footer-socials a[aria-label*="Instagram"] svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .footer-socials .social-dot{fill:currentColor;stroke:none}
 .footer-links,.footer-contact{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding-top:8px}
 .footer-links>strong,.footer-contact>strong{margin-bottom:4px;color:#fff;font-family:'Manrope',sans-serif;font-size:.92rem}
