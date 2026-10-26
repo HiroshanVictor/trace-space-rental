@@ -1,0 +1,72 @@
+.pub-calendar-results{
+ display:grid;
+ grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:15px;
+ align-items:start;
+}
+.pub-calendar-results>.pub-results-heading,
+.pub-calendar-results>.pub-calendar-summary,
+.pub-calendar-results>.pub-hour-labels{
+ grid-column:1/-1;
+}
+.pub-calendar-results .pub-venue-card{
+ display:flex;
+ flex-direction:column;
+ aspect-ratio:1/1;
+ min-width:0;
+ margin:0;
+}
+.pub-calendar-results .pub-venue-top{
+ display:grid;
+ grid-template-columns:minmax(0,1fr);
+ grid-template-rows:74px 1fr auto;
+ align-items:start;
+ gap:8px;
+ padding:14px;
+ flex:1;
+}
+.pub-calendar-results .pub-venue-thumb{
+ width:100%;
+ height:74px;
+ flex-basis:auto;
+ border-radius:11px;
+}
+.pub-calendar-results .pub-venue-top>div:nth-child(2){min-width:0}
+.pub-calendar-results .pub-venue-top h3{overflow-wrap:anywhere}
+.pub-calendar-results .pub-venue-top>.btn{
+ grid-column:1;
+ width:100%;
+ align-self:end;
+}
+.pub-calendar-results .pub-venue-expand{margin-top:auto}
+.pub-calendar-results .pub-venue-card:has(.pub-venue-expand[open]){
+ aspect-ratio:auto;
+}
+.pub-calendar-results .pub-venue-card:has(.pub-venue-expand[open]) .pub-venue-top{
+ flex:0 0 auto;
+}
+.pub-calendar-results .pub-venue-expand[open]{
+ flex:0 0 auto;
+ overflow:visible;
+}
+.pub-calendar-results .pub-venue-expand[open] .pub-venue-schedule{padding:12px 10px 0}
+.pub-calendar-results .pub-venue-expand[open] .pub-hour-slots{grid-template-columns:repeat(6,minmax(0,1fr))}
+.pub-calendar-results .pub-venue-expand[open] .pub-hour{min-height:30px;font-size:.58rem}
+.pub-calendar-results .pub-venue-expand[open] .pub-venue-details{padding:11px}
+.pub-calendar-results .pub-venue-expand[open] .pub-booked-line{min-width:0;width:100%}
+@media(max-width:1100px){
+ .pub-calendar-results{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+ .pub-calendar-results{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+ .pub-calendar-results .pub-venue-top{grid-template-columns:minmax(0,1fr);grid-template-rows:68px 1fr auto;gap:8px;padding:11px}
+ .pub-calendar-results .pub-venue-thumb{width:100%;height:68px}
+ .pub-calendar-results .pub-venue-top h3{font-size:.9rem}
+ .pub-calendar-results .pub-venue-top small{font-size:.68rem}
+ .pub-calendar-results .pub-availability-status{font-size:.58rem}
+ .pub-calendar-results .pub-venue-expand>summary{gap:6px;padding:10px;font-size:.68rem}
+ .pub-calendar-results .pub-venue-expand>summary b{padding:3px 7px}
+}
+@media(max-width:520px){
+ .pub-calendar-results{grid-template-columns:1fr}
+}

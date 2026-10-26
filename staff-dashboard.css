@@ -1,0 +1,94 @@
+.app-shell{
+ font-family:Inter,"Inter Fallback",sans-serif;
+ font-size:.875rem;
+}
+.app-shell :is(button,input,select,textarea){
+ font-family:Inter,"Inter Fallback",sans-serif;
+}
+.app-shell :is(h1,h2,h3,h4,.topbar-heading,.page-heading p,.stat-label,.stat-value,.stat-note,.card-head h3,.schedule-item strong,.schedule-item small,.data-table th,.data-table td,.side-link,.nav-label,.toolbar,.pill,.empty){
+ font-family:Inter,"Inter Fallback",sans-serif;
+}
+.app-shell .topbar-heading{font-size:1rem;font-weight:700;letter-spacing:-.025em}
+.app-shell .page-heading h1{font-size:clamp(1.7rem,2.2vw,2rem);font-weight:700;line-height:1.2;letter-spacing:-.045em}
+.app-shell .page-heading p{font-size:.94rem;line-height:1.55}
+.app-shell .page-heading .btn{font-size:.86rem;font-weight:700}
+.app-shell .stat-label{font-size:.82rem;font-weight:650;letter-spacing:.015em}
+.app-shell .stat-value{font-size:clamp(1.9rem,2.5vw,2.2rem);font-weight:750;line-height:1.08;letter-spacing:-.055em}
+.app-shell .stat-note{font-size:.78rem;line-height:1.45}
+.app-shell .card-head h3{font-size:1.02rem;font-weight:700;letter-spacing:-.025em}
+.app-shell .tiny-link{font-size:.82rem;font-weight:700}
+.app-shell .schedule-time{font-size:.8rem;font-weight:650;line-height:1.5}
+.app-shell .schedule-item strong{font-size:.88rem;font-weight:650;line-height:1.45}
+.app-shell .schedule-item small{font-size:.78rem;line-height:1.45}
+.app-shell .shortcut{font-size:.82rem;font-weight:650}
+.app-shell .hintbox,.app-shell .note{font-size:.84rem;line-height:1.6}
+.app-shell .data-table th{font-size:.7rem;font-weight:700;letter-spacing:.07em}
+.app-shell .data-table td{font-size:.83rem;line-height:1.5}
+.app-shell .data-table strong{font-size:.86rem}
+.app-shell .data-table small{font-size:.76rem}
+.app-shell .side-link{font-size:.84rem;font-weight:600}
+.app-shell .nav-label{font-size:.69rem;font-weight:700;letter-spacing:.13em}
+.app-shell .toolbar{font-size:.85rem}
+.app-shell .field label{font-size:.84rem;font-weight:650}
+.app-shell .input,.app-shell .select,.app-shell .textarea{font-size:.86rem}
+.app-shell .btn{font-size:.84rem;font-weight:700}
+.app-shell .btn.mini{font-size:.76rem}
+.app-shell .pill{font-size:.69rem;font-weight:700}
+.app-shell .empty strong{font-size:.96rem}
+.app-shell .empty span{font-size:.82rem}
+.app-shell .stat-card,
+.app-shell .section-grid > .card{
+ border:1px solid #d5dfed;
+ border-radius:16px;
+ box-shadow:0 5px 18px rgba(20,40,72,.055);
+}
+.app-shell .shortcut{
+ border:1px solid #d5dfed;
+ border-radius:13px;
+ box-shadow:0 2px 8px rgba(20,40,72,.04);
+ transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.app-shell .shortcut:hover{
+ border-color:#9db5d7;
+ box-shadow:0 6px 16px rgba(33,88,209,.1);
+ transform:translateY(-1px);
+}
+.app-shell .shortcut:focus-visible{
+ outline:3px solid rgba(33,88,209,.25);
+ outline-offset:2px;
+}
+.app-shell .sidebar{
+ height:100vh;
+ height:100dvh;
+ overflow-y:auto;
+ scrollbar-width:thin;
+ scrollbar-color:#3b5674 #102038;
+}
+.app-shell .sidebar .logo{margin-bottom:20px}
+.app-shell .sidebar .nav-label{padding-top:4px;padding-bottom:7px}
+.app-shell .sidebar .side-link{gap:10px;padding:9px 12px;margin:1px 0}
+.app-shell .sidebar .sidebar-foot{padding-top:11px;padding-bottom:11px}
+@media(max-height:760px){
+ .app-shell .sidebar{padding-top:16px;padding-bottom:10px}
+ .app-shell .sidebar .logo{margin-bottom:12px}
+ .app-shell .sidebar .side-link{padding-top:7px;padding-bottom:7px;font-size:.8rem}
+ .app-shell .sidebar .sidebar-foot{padding-top:8px;padding-bottom:8px}
+ .app-shell .sidebar .sidebar-foot .btn{margin-top:7px}
+}
+html:lang(si) .app-shell,
+html:lang(si) .app-shell :is(button,input,select,textarea,h1,h2,h3,h4,p,span,strong,small,label,th,td){
+ font-family:'Noto Sans Sinhala','DM Sans',sans-serif;
+}
+html:lang(ta) .app-shell,
+html:lang(ta) .app-shell :is(button,input,select,textarea,h1,h2,h3,h4,p,span,strong,small,label,th,td){
+ font-family:'Noto Sans Tamil','DM Sans',sans-serif;
+}
+@media(max-width:760px){
+ .app-shell .page-heading h1{font-size:1.65rem}
+ .app-shell .page-heading p{font-size:.86rem}
+ .app-shell .stat-label{font-size:.77rem}
+ .app-shell .stat-value{font-size:1.8rem}
+ .app-shell .stat-note{font-size:.74rem}
+ .app-shell .data-table td{font-size:.8rem}
+ .app-shell .field label{font-size:.82rem}
+}
