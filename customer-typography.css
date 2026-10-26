@@ -1,0 +1,18 @@
+.public-page,
+.public-page *,
+.auth-wrap,
+.auth-wrap *{
+ font-family:Inter,"Inter Fallback",sans-serif!important;
+}
+html:lang(si) .public-page,
+html:lang(si) .public-page *,
+html:lang(si) .auth-wrap,
+html:lang(si) .auth-wrap *{
+ font-family:'Noto Sans Sinhala','DM Sans',sans-serif!important;
+}
+html:lang(ta) .public-page,
+html:lang(ta) .public-page *,
+html:lang(ta) .auth-wrap,
+html:lang(ta) .auth-wrap *{
+ font-family:'Noto Sans Tamil','DM Sans',sans-serif!important;
+}
