@@ -3,6 +3,7 @@ import {availabilityFor,validateBooking,validateSpace,intersects} from './engine
 import {dayBounds,publicFromRecords} from './publicAvailability.js';
 import {summarizeBookingCounts,summarizeSpaceActivity} from './publicActivity.js';
 import {notifyInquiry} from './inquiryNotifications.js';
+import {sendInquiryReservationEmail} from './reservationEmails.js';
 const KEY='tec-spacerental-v2';
 const config=window.SPACE_RENTAL_CONFIG||{};
 let cloudClient=null;
@@ -10,7 +11,8 @@ let cloudAuth=false;
 export const cloudEnabled=Boolean(config.supabaseUrl && config.supabaseAnonKey);
 export const isCloud=()=>cloudEnabled;
 export const inquiryEmailEnabled=()=>cloudEnabled && Boolean(config.notifyInquiryEndpoint);
-export const bookingEmailEnabled=()=>inquiryEmailEnabled();
+export const reservationEmailEnabled=()=>cloudEnabled && Boolean(config.reservationEmailEndpoint);
+export const bookingEmailEnabled=()=>reservationEmailEnabled();
 let localData;
 function readDemo(){
   try {const parsed=JSON.parse(localStorage.getItem(KEY)); if(parsed?.spaces && parsed?.bookings) return parsed;}catch(_){}
@@ -150,7 +152,10 @@ export async function submitInquiry(payload){
   const {error}=await sup.from('inquiries').insert({...payload,id:inquiryId,status:'new'});
   if(error)throw Error(error.message);
   const notification=await notifyInquiry(config.notifyInquiryEndpoint,inquiryId);
-  return {ok:true,id:inquiryId,notification};
+  // A staff alert and the customer's conversation root are independent durable jobs.
+  // The inquiry stays saved if either network response is lost.
+  const reservationEmail=await sendInquiryReservationEmail(config.reservationEmailEndpoint,inquiryId);
+  return {ok:true,id:inquiryId,notification,reservationEmail};
 }
 export async function retryInquiryEmail(inquiryId){
   if(!inquiryEmailEnabled())return {status:'not_configured'};
@@ -162,12 +167,12 @@ export async function sendBookingConfirmation(bookingId){
   const {data:{session}}=await sup.auth.getSession();
   if(!session?.access_token)return {status:'failed'};
   try{
-    const response=await fetch('/.netlify/functions/notify-booking',{
+    const response=await fetch('/.netlify/functions/send-reservation-email',{
       method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},
       body:JSON.stringify({booking_id:bookingId}),signal:AbortSignal.timeout(12000)
     });
     const body=await response.json().catch(()=>null);
-    return response.ok&&body?.ok&&body.status==='sent'?{status:'sent'}:{status:response.status===503&&body?.code==='not_configured'?'not_configured':'failed'};
+    return response.ok&&body?.ok&&['accepted','nothing_to_send','awaiting_thread'].includes(body.status)?{status:'sent'}:{status:response.status===503&&body?.code==='not_configured'?'not_configured':'failed'};
   }catch{return {status:'pending'};}
 }
 export function demoReset(){if(cloudEnabled)throw Error('Reset is for demo mode only.');localData=makeSeed();saveDemo();}

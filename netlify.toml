@@ -3,6 +3,12 @@
   publish = "."
 [functions]
   directory = "netlify/functions"
+
+[functions."expire-payment-holds"]
+schedule = "*/15 * * * *"
+
+[functions."process-reservation-email-outbox"]
+schedule = "*/5 * * * *"
 [[headers]]
   for = "/*"
   [headers.values]

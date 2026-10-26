@@ -531,7 +531,16 @@ async function submitForm(form){const f=getPayload(form),which=form.dataset.form
       values.customer_id=added.id;
     }
   }
-  const saved=await save('bookings',values,id);const inquiryId=form.dataset.inquiry;
+  const inquiryId=form.dataset.inquiry;values.inquiry_id=inquiryId||values.inquiry_id||null;
+  let saved;
+  try{saved=await save('bookings',values,id)}catch(error){
+   // Existing projects can be updated before migration 12 is run. Keep the core
+   // reservation workflow usable and link future conversions after that migration.
+   if(!inquiryId||!/inquiry_id.*(column|schema cache)|column.*inquiry_id/i.test(String(error?.message||error)))throw error;
+   delete values.inquiry_id;
+   saved=await save('bookings',values,id);
+   showToast('Reservation saved. Run migration 12 to link its email conversation.',true);
+  }
   if(inquiryId){try{await save('inquiries',{status:'converted'},inquiryId)}catch(e){showToast(t("Reservation saved but inquiry status could not be updated."),true)}}
   const shouldNotify=['pending','confirmed'].includes(values.status)&&saved.confirmation_email_status!=='sent';
   const notification=shouldNotify?await sendBookingConfirmation(saved.id):{status:'already_sent'};

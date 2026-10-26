@@ -90,6 +90,10 @@ Without the staging settings and explicit write flag, the check exits before mak
 
 ## Payments and privacy
 
+## Reservation email conversations
+
+For threaded customer reservation emails, run `supabase/12_reservation_email_conversations.sql` after migration 11 and deploy the new Netlify functions. Then follow [RESERVATION_EMAILS.md](RESERVATION_EMAILS.md) to configure the server-only Resend sender, monitored Reply-To mailbox, webhook secret and scheduled payment-hold review. The workflow is disabled until those settings are present; it does not send a real email during setup.
+
 Payments are recorded manually (amount received and status). No actual charges are processed. Customer emails/phones are private tables under staff-only RLS. Define a privacy notice and retention policy before opening a public production service.
 
 ## Operations checklist
