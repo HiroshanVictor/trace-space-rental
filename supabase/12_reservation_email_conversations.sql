@@ -102,7 +102,7 @@ grant select,insert,update,delete on public.reservation_email_conversations,publ
 
 create or replace function public.queue_reservation_email(
   p_conversation uuid,p_inquiry uuid,p_booking uuid,p_event text
-) returns void language plpgsql security invoker set search_path=public as $$
+) returns void language plpgsql security definer set search_path=public as $$
 begin
   insert into public.reservation_email_outbox(conversation_id,inquiry_id,booking_id,event_type,idempotency_key)
   values(p_conversation,p_inquiry,p_booking,p_event,'reservation-email/'||p_conversation::text||'/'||p_event)
@@ -110,7 +110,7 @@ begin
 end $$;
 
 create or replace function public.start_inquiry_email_conversation() returns trigger
-language plpgsql security invoker set search_path=public as $$
+language plpgsql security definer set search_path=public as $$
 declare v_id uuid;
 begin
   insert into public.reservation_email_conversations(reference,inquiry_id,customer_email,preferred_language,subject)
@@ -125,7 +125,7 @@ create trigger inquiry_email_conversation after insert on public.inquiries
 for each row execute function public.start_inquiry_email_conversation();
 
 create or replace function public.queue_booking_email_conversation() returns trigger
-language plpgsql security invoker set search_path=public as $$
+language plpgsql security definer set search_path=public as $$
 declare v_id uuid; v_ref text; v_language text; v_event text;
 begin
   if new.customer_email not like '%@%' then return new; end if;
