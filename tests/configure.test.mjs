@@ -24,7 +24,7 @@ test('only public values are generated and email needs complete server configura
   assert.equal(incomplete.notifyInquiryEndpoint,'');
   const result=buildConfig({...publicConfig,SUPABASE_SERVICE_ROLE_KEY:'private-service-key',RESEND_API_KEY:'private-provider-key',INQUIRY_TO_EMAIL:'staff@example.test',RESEND_FROM_EMAIL:'sender@example.test'});
   assert.equal(result.notifyInquiryEndpoint,'/.netlify/functions/notify-inquiry');
-  assert.equal(result.reservationEmailEndpoint,'');
+  assert.equal(result.reservationEmailEndpoint,'/.netlify/functions/send-reservation-email');
   const conversations=buildConfig({...publicConfig,SUPABASE_SERVICE_ROLE_KEY:'private-service-key',RESEND_API_KEY:'private-provider-key',INQUIRY_TO_EMAIL:'staff@example.test',RESEND_FROM_EMAIL:'sender@example.test',RESEND_REPLY_TO_EMAIL:'desk@example.test'});
   assert.equal(conversations.reservationEmailEndpoint,'/.netlify/functions/send-reservation-email');
   assert.doesNotMatch(JSON.stringify(result),/private-provider-key|private-service-key|staff@example.test/);

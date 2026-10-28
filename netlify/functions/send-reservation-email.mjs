@@ -5,7 +5,8 @@ export function createHandler({env=process.env,fetchImpl=globalThis.fetch}={}){
   const reply=(status,body,headers={})=>Response.json(body,{status,headers:{'Cache-Control':'no-store',...headers}});
   if(req.method!=='POST')return reply(405,{ok:false,code:'method_not_allowed'},{Allow:'POST'});
   let request;try{const raw=await req.text();if(raw.length>1024)return reply(413,{ok:false,code:'request_too_large'});request=JSON.parse(raw);}catch{return reply(400,{ok:false,code:'invalid_request'});}
-  const {SUPABASE_URL:url,SUPABASE_SERVICE_ROLE_KEY:key,RESEND_API_KEY:resendKey,RESEND_FROM_EMAIL:from,RESEND_REPLY_TO_EMAIL:replyTo}=env;
+  const {SUPABASE_URL:url,SUPABASE_SERVICE_ROLE_KEY:key,RESEND_API_KEY:resendKey,RESEND_FROM_EMAIL:from,RESEND_REPLY_TO_EMAIL:configuredReplyTo,INQUIRY_TO_EMAIL:staffInbox}=env;
+  const replyTo=configuredReplyTo||staffInbox;
   if(!url||!key||!resendKey||!from||!replyTo)return reply(503,{ok:false,code:'not_configured'});
   const base=url.replace(/\/$/,'');const headers={apikey:key,Authorization:`Bearer ${key}`,'Content-Type':'application/json'};
   const db=async(path,options={})=>{const res=await fetchImpl(`${base}/rest/v1/${path}`,{...options,headers:{...headers,...options.headers},signal:AbortSignal.timeout(10000)});if(!res.ok)throw Error('database_unavailable');return res.status===204?null:res.json();};

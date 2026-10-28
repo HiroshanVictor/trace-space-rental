@@ -159,7 +159,11 @@ export async function submitInquiry(payload){
 }
 export async function retryInquiryEmail(inquiryId){
   if(!inquiryEmailEnabled())return {status:'not_configured'};
-  return notifyInquiry(config.notifyInquiryEndpoint,inquiryId);
+  const [staffNotification]=await Promise.all([
+    notifyInquiry(config.notifyInquiryEndpoint,inquiryId),
+    sendInquiryReservationEmail(config.reservationEmailEndpoint,inquiryId)
+  ]);
+  return staffNotification;
 }
 export async function sendBookingConfirmation(bookingId){
   if(!bookingEmailEnabled())return {status:'not_configured'};

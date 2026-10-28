@@ -13,7 +13,7 @@ Set these **server-only** Netlify variables. Do not put any of them in `config.j
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Server-side outbox and booking access |
 | `RESEND_API_KEY` | Resend API authentication |
 | `RESEND_FROM_EMAIL` | A verified sender address only |
-| `RESEND_REPLY_TO_EMAIL` | Monitored TRACE front-desk mailbox |
+| `RESEND_REPLY_TO_EMAIL` | Optional monitored TRACE front-desk mailbox; when omitted, `INQUIRY_TO_EMAIL` is used as Reply-To |
 | `RESEND_WEBHOOK_SECRET` | Signature verification for `/.netlify/functions/resend-webhook` |
 | `SCHEDULER_SECRET` | Protects the scheduled worker's internal hand-off to the email sender |
 | `INQUIRY_TO_EMAIL` | Existing staff inquiry-alert recipient |

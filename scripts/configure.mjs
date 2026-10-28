@@ -21,7 +21,9 @@ export function buildConfig(env,existing={}) {
   const emailReady=url && ['SUPABASE_SERVICE_ROLE_KEY','RESEND_API_KEY','INQUIRY_TO_EMAIL','RESEND_FROM_EMAIL'].every(name=>Boolean(env[name]?.trim()));
   const endpoint=env.INQUIRY_NOTIFY_ENDPOINT!==undefined?env.INQUIRY_NOTIFY_ENDPOINT.trim():existing.notifyInquiryEndpoint||(emailReady?'/.netlify/functions/notify-inquiry':'');
   if(endpoint && (!endpoint.startsWith('/')||endpoint.startsWith('//')))throw Error('INQUIRY_NOTIFY_ENDPOINT must be a path on this website.');
-  const conversationReady=emailReady&&Boolean(env.RESEND_REPLY_TO_EMAIL?.trim());
+  // The existing staff inbox is a safe Reply-To fallback. A dedicated front-desk
+  // Reply-To address can still be supplied when one is available.
+  const conversationReady=emailReady;
   const reservationEmailEndpoint=env.RESERVATION_EMAIL_ENDPOINT!==undefined?env.RESERVATION_EMAIL_ENDPOINT.trim():existing.reservationEmailEndpoint||(conversationReady?'/.netlify/functions/send-reservation-email':'');
   if(reservationEmailEndpoint && (!reservationEmailEndpoint.startsWith('/')||reservationEmailEndpoint.startsWith('//')))throw Error('RESERVATION_EMAIL_ENDPOINT must be a path on this website.');
   return {supabaseUrl:url.replace(/\/$/,''),supabaseAnonKey:key,notifyInquiryEndpoint:endpoint,reservationEmailEndpoint};
