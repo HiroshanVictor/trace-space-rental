@@ -2,8 +2,7 @@ import {makeSeed,id} from './data.js';
 import {availabilityFor,validateBooking,validateSpace,intersects} from './engine.js';
 import {dayBounds,publicFromRecords} from './publicAvailability.js';
 import {summarizeBookingCounts,summarizeSpaceActivity} from './publicActivity.js';
-import {notifyInquiry} from './inquiryNotifications.js';
-import {sendInquiryReservationEmail} from './reservationEmails.js';
+import {notifySavedInquiry} from './inquiryDelivery.js';
 const KEY='tec-spacerental-v2';
 const config=window.SPACE_RENTAL_CONFIG||{};
 let cloudClient=null;
@@ -151,19 +150,15 @@ export async function submitInquiry(payload){
   // Use a caller-generated ID: anonymous INSERT is allowed, private SELECT is not.
   const {error}=await sup.from('inquiries').insert({...payload,id:inquiryId,status:'new'});
   if(error)throw Error(error.message);
-  const notification=await notifyInquiry(config.notifyInquiryEndpoint,inquiryId);
   // A staff alert and the customer's conversation root are independent durable jobs.
   // The inquiry stays saved if either network response is lost.
-  const reservationEmail=await sendInquiryReservationEmail(config.reservationEmailEndpoint,inquiryId);
+  const emails=await notifySavedInquiry({staffEndpoint:config.notifyInquiryEndpoint,reservationEndpoint:config.reservationEmailEndpoint,inquiryId});
+  const notification=emails.staff,reservationEmail=emails.customer;
   return {ok:true,id:inquiryId,notification,reservationEmail};
 }
 export async function retryInquiryEmail(inquiryId){
   if(!inquiryEmailEnabled())return {status:'not_configured'};
-  const [staffNotification]=await Promise.all([
-    notifyInquiry(config.notifyInquiryEndpoint,inquiryId),
-    sendInquiryReservationEmail(config.reservationEmailEndpoint,inquiryId)
-  ]);
-  return staffNotification;
+  return (await notifySavedInquiry({staffEndpoint:config.notifyInquiryEndpoint,reservationEndpoint:config.reservationEmailEndpoint,inquiryId})).staff;
 }
 export async function sendBookingConfirmation(bookingId){
   if(!bookingEmailEnabled())return {status:'not_configured'};

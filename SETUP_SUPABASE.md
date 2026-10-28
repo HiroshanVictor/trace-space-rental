@@ -12,7 +12,8 @@
    window.SPACE_RENTAL_CONFIG = {
      supabaseUrl: 'https://YOUR-PROJECT.supabase.co',
      supabaseAnonKey: 'YOUR_PUBLIC_PUBLISHABLE_OR_ANON_KEY',
-     notifyInquiryEndpoint: ''
+     notifyInquiryEndpoint: '/.netlify/functions/notify-inquiry',
+     reservationEmailEndpoint: '/.netlify/functions/send-reservation-email'
    };
    ```
 7. Serve the folder at localhost using `python -m http.server 5173`, or deploy the entire project to Netlify. Test public inquiry submission and staff login. The staff portal must ask for your credentials.
@@ -22,7 +23,7 @@ For the existing `t2t group1` project, first check Table Editor for `spaces`, `b
 
 ## Configure Netlify from environment variables
 
-Git-connected Netlify deployments now run `node scripts/configure.mjs` automatically. Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in Netlify's build environment. A legacy public JWT is accepted under `SUPABASE_ANON_KEY` instead. The build writes only these public values and the notification endpoint to `config.js`; service-role keys and email secrets are excluded. Partial configuration, remote HTTP project URLs, and server keys used as public keys fail the build with a generic error that does not print the key.
+Git-connected Netlify deployments now run `node scripts/configure.mjs` automatically. Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in Netlify's build environment. A legacy public JWT is accepted under `SUPABASE_ANON_KEY` instead. When the server email settings are present, the build writes the staff-alert and customer-acknowledgement paths to `config.js`; service-role keys and email secrets are excluded. Partial configuration, remote HTTP project URLs, and server keys used as public keys fail the build with a generic error that does not print the key.
 
 Existing valid manual configuration is preserved when no environment overrides are supplied. With neither manual values nor environment settings, the app stays in browser-local demo mode. `npm run configure` runs the same generator locally using the current process environment; `.env.example` is a reference, and `.env` files are not automatically loaded. Do not commit real secret files.
 
@@ -60,8 +61,8 @@ The presentation says an inquiry should email an administrator, but the speaker 
    - `RESEND_API_KEY` = your private mail provider API key;
    - `RESEND_FROM_EMAIL` = a provider-verified sender address;
    - `INQUIRY_TO_EMAIL` = the company's admin inbox.
-4. Redeploy. The build enables `/.netlify/functions/notify-inquiry` when all email settings are present. You can alternatively set that relative path manually in `config.js`, or use `INQUIRY_NOTIFY_ENDPOINT` as an explicit build override. Keep it blank if notification delivery is not configured.
-5. Test a public inquiry and verify that the database receives it and an email reaches the inbox.
+4. Redeploy. The build enables `/.netlify/functions/notify-inquiry` for the staff alert and `/.netlify/functions/send-reservation-email` for the customer acknowledgement when all email settings are present. You can set the two paths manually in `config.js`, or use `INQUIRY_NOTIFY_ENDPOINT` and `RESERVATION_EMAIL_ENDPOINT` as explicit build overrides.
+5. Test a public inquiry: verify the front desk receives the internal inquiry details at `INQUIRY_TO_EMAIL`, and the customer email receives the `TRACE Expert City | Space Reservation | TRC-…` acknowledgement. If either email fails, confirm the inquiry still appears in the staff workspace and retry it from its details view.
 
 The endpoint accepts an inquiry UUID, reads its canonical saved content server-side, and sends it only to the configured staff inbox. Private inquiry contents are never returned to visitors. A database claim limits retries for the same inquiry to once per minute and skips records already marked sent. Resend receives the same idempotency key for retries; its protection lasts 24 hours ([provider documentation](https://resend.com/docs/dashboard/emails/idempotency-keys)). A provider acceptance is recorded as sent; inbox delivery and subsequent bounces are not tracked.
 
