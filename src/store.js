@@ -3,6 +3,7 @@ import {availabilityFor,validateBooking,validateSpace,intersects} from './engine
 import {dayBounds,publicFromRecords} from './publicAvailability.js';
 import {summarizeBookingCounts,summarizeSpaceActivity} from './publicActivity.js';
 import {notifySavedInquiry} from './inquiryDelivery.js';
+import {bookingEmailResult} from './reservationEmails.js';
 const KEY='tec-spacerental-v2';
 const config=window.SPACE_RENTAL_CONFIG||{};
 let cloudClient=null;
@@ -166,12 +167,12 @@ export async function sendBookingConfirmation(bookingId){
   const {data:{session}}=await sup.auth.getSession();
   if(!session?.access_token)return {status:'failed'};
   try{
-    const response=await fetch('/.netlify/functions/send-reservation-email',{
+    const response=await fetch(config.reservationEmailEndpoint,{
       method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},
       body:JSON.stringify({booking_id:bookingId}),signal:AbortSignal.timeout(12000)
     });
     const body=await response.json().catch(()=>null);
-    return response.ok&&body?.ok&&['accepted','nothing_to_send','awaiting_thread'].includes(body.status)?{status:'sent'}:{status:response.status===503&&body?.code==='not_configured'?'not_configured':'failed'};
+    return bookingEmailResult(response,body);
   }catch{return {status:'pending'};}
 }
 export function demoReset(){if(cloudEnabled)throw Error('Reset is for demo mode only.');localData=makeSeed();saveDemo();}

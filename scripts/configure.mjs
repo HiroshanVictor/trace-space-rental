@@ -2,6 +2,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import vm from 'node:vm';
+import {emailSettings} from '../netlify/functions/lib/email-provider.mjs';
 
 export function buildConfig(env,existing={}) {
   const url=env.SUPABASE_URL?.trim()||existing.supabaseUrl||'';
@@ -18,7 +19,7 @@ export function buildConfig(env,existing={}) {
       if(role!=='anon')throw Error('Use a public publishable/anon key in the browser configuration. Server keys are not allowed.');
     }
   }
-  const emailReady=url && ['SUPABASE_SERVICE_ROLE_KEY','RESEND_API_KEY','INQUIRY_TO_EMAIL','RESEND_FROM_EMAIL'].every(name=>Boolean(env[name]?.trim()));
+  const emailReady=url && env.SUPABASE_SERVICE_ROLE_KEY?.trim() && env.INQUIRY_TO_EMAIL?.trim() && Boolean(emailSettings(env));
   const endpoint=env.INQUIRY_NOTIFY_ENDPOINT!==undefined?env.INQUIRY_NOTIFY_ENDPOINT.trim():existing.notifyInquiryEndpoint||(emailReady?'/.netlify/functions/notify-inquiry':'');
   if(endpoint && (!endpoint.startsWith('/')||endpoint.startsWith('//')))throw Error('INQUIRY_NOTIFY_ENDPOINT must be a path on this website.');
   // The existing staff inbox is a safe Reply-To fallback. A dedicated front-desk

@@ -3,7 +3,11 @@ import {getLanguage,languages,t} from './i18n.js';
 
 export function languageSelector({compact=false} = {}) {
   const current=languages.find(language=>language.code===getLanguage());
-  return `<div class="language-switcher${compact?' language-switcher-compact':''}" role="group" aria-label="${h(t('Language'))}" title="${h(t('Language'))}: ${h(current.name)}">${languages.map(({code,name}) => `<button type="button" data-language="${code}" lang="${code}" translate="no" aria-pressed="${getLanguage()===code}">${name}</button>`).join('')}</div>`;
+  const label=`${h(t('Language'))}: ${h(current.name)}`;
+  return `<details class="language-switcher${compact?' language-switcher-compact':''}">
+    <summary data-language-toggle aria-label="${label}" title="${label}"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1m14 20-5-11-5 11M14 18h6"/></svg></summary>
+    <div class="language-options" role="group" aria-label="${h(t('Language'))}">${languages.map(({code,name}) => `<button type="button" data-language="${code}" lang="${code}" translate="no" aria-pressed="${current.code===code}"><span>${name}</span>${current.code===code?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>':''}</button>`).join('')}</div>
+  </details>`;
 }
 
 // A language change must preserve an inquiry or reservation the user is editing.

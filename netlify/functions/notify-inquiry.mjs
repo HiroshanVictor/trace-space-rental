@@ -1,5 +1,6 @@
 /** Send only a saved inquiry to the configured staff inbox. Secrets stay server-side. */
-export function createHandler({env=process.env,fetchImpl=globalThis.fetch} = {}) {
+import {emailSettings,sendProviderEmail} from './lib/email-provider.mjs';
+export function createHandler({env=process.env,fetchImpl=globalThis.fetch,createTransportImpl} = {}) {
   return async req=>{
     const reply=(status,body,headers={})=>Response.json(body,{status,headers:{'Cache-Control':'no-store',...headers}});
     if(req.method!=='POST')return reply(405,{ok:false,code:'method_not_allowed'},{Allow:'POST'});
@@ -12,8 +13,8 @@ export function createHandler({env=process.env,fetchImpl=globalThis.fetch} = {})
     }catch{return reply(400,{ok:false,code:'invalid_request'});}
     const inquiryId=body?.inquiry_id;
     if(typeof inquiryId!=='string'||!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(inquiryId))return reply(400,{ok:false,code:'invalid_inquiry'});
-    const {SUPABASE_URL:url,SUPABASE_SERVICE_ROLE_KEY:serviceKey,RESEND_API_KEY:emailKey,INQUIRY_TO_EMAIL:recipient,RESEND_FROM_EMAIL:sender}=env;
-    if(!url||!serviceKey||!emailKey||!recipient||!sender)return reply(503,{ok:false,code:'not_configured'});
+    const {SUPABASE_URL:url,SUPABASE_SERVICE_ROLE_KEY:serviceKey,INQUIRY_TO_EMAIL:recipient,RESEND_FROM_EMAIL:sender}=env;
+    if(!url||!serviceKey||!recipient||!emailSettings(env))return reply(503,{ok:false,code:'not_configured'});
     const databaseHeaders={apikey:serviceKey,Authorization:`Bearer ${serviceKey}`,'Content-Type':'application/json'};
     const database=async(path,options={})=>{
       const response=await fetchImpl(`${url.replace(/\/$/,'')}/rest/v1/${path}`,{
@@ -47,15 +48,9 @@ export function createHandler({env=process.env,fetchImpl=globalThis.fetch} = {})
     ].join('\n');
     let sent=false,errorCode='provider_unreachable';
     try{
-      const response=await fetchImpl('https://api.resend.com/emails',{
-        method:'POST',headers:{Authorization:`Bearer ${emailKey}`,'Content-Type':'application/json','Idempotency-Key':`inquiry/${inquiry.id}`},
-        body:JSON.stringify({from:sender,to:[recipient],subject:`New space rental inquiry: ${clean(inquiry.name,120)}`,text}),
-        signal:AbortSignal.timeout(8000)
-      });
-      const accepted=await response.json().catch(()=>null);
-      sent=response.ok && typeof accepted?.id==='string' && Boolean(accepted.id);
-      errorCode=response.ok?'invalid_provider_response':'provider_rejected';
-    }catch{ /* Staff can retry uncertain results using the same idempotency key. */ }
+      await sendProviderEmail({env,fetchImpl,createTransportImpl,message:{from:sender,to:recipient,subject:`New space rental inquiry: ${clean(inquiry.name,120)}`,text},idempotencyKey:`inquiry/${inquiry.id}`});
+      sent=true;
+    }catch{ /* Staff can retry uncertain results. SMTP has no exactly-once guarantee. */ }
     try{
       await database(`inquiries?id=eq.${inquiry.id}&notification_attempts=eq.${inquiry.notification_attempts}`,{
         method:'PATCH',body:JSON.stringify({notification_status:sent?'sent':'failed',notification_sent_at:sent?new Date().toISOString():null,notification_error:sent?'':errorCode})

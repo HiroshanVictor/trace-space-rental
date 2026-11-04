@@ -16,7 +16,7 @@ TRACE EXPERT CITY — SPACE RENTAL APP
 8) Try Spaces Management > Add a space, then Reservations > New reservation.
 9) Try booking the same meeting room for overlapping dates; the second booking must fail.
 
-FIRST-TIME NOTE: Install Node.js 18+ if `npm` is not recognized.
+FIRST-TIME NOTE: Install Node.js 24 LTS (20+ required) if `npm` is not recognized. Run `npm install` before email-function development or tests.
 ALTERNATIVE: If you already have Python installed, run:
    python -m http.server 5173
 

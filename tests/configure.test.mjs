@@ -39,6 +39,10 @@ test('deployment generator writes a usable browser config without any server sec
     const generated=await readFile(path,'utf8');
     assert.match(generated,/sb_publishable_test/);assert.match(generated,/notify-inquiry/);
     assert.doesNotMatch(generated,/private-server-secret|private-email-secret|staff@example.test/);
+    await configure({env:{...publicConfig,EMAIL_PROVIDER:'gmail_smtp',SUPABASE_SERVICE_ROLE_KEY:'private-server-secret',SMTP_HOST:'smtp.gmail.com',SMTP_PORT:'465',SMTP_USER:'test@gmail.com',SMTP_PASS:'fake-smtp-secret',EMAIL_FROM_EMAIL:'test@gmail.com',EMAIL_REPLY_TO:'test@gmail.com',INQUIRY_TO_EMAIL:'staff@example.test'},configPath:path});
+    const gmailConfig=await readFile(path,'utf8');
+    assert.match(gmailConfig,/send-reservation-email/);
+    assert.doesNotMatch(gmailConfig,/SMTP|fake-smtp-secret|private-server-secret|test@gmail.com|staff@example.test/);
   }finally{
     const target=resolve(temporary);
     assert.equal(dirname(target),resolve(tmpdir()));assert.ok(basename(target).startsWith('tec-config-test-'));

@@ -1,5 +1,7 @@
 # Reservation email conversations
 
+For testing without a custom sending domain, use the optional Gmail SMTP provider in [GMAIL_SMTP_SETUP.md](GMAIL_SMTP_SETUP.md). It uses the same reservation outbox and lifecycle templates, with TLS on port 465, server-only credentials, and immediate SMTP Message-IDs for threading. Resend keys and webhooks are not required in Gmail mode. The Resend settings below apply when `EMAIL_PROVIDER` is omitted or set to `resend`.
+
 Apply `supabase/12_reservation_email_conversations.sql`, `supabase/13_fix_reservation_email_rls.sql`, and `supabase/14_reservation_email_workflow_hardening.sql` in that order. Migration 14 adds default payment-deadline safeguards, reviewed non-payment cancellations, bounded outbox retries, and a staff-only email-history RPC; it does not send mail or modify a reservation by itself.
 
 Run `supabase/12_reservation_email_conversations.sql` after the existing database migrations, then deploy the Netlify functions. The migration generates one non-sensitive `TRC-…` reference when a public inquiry is saved. It creates one conversation whose subject remains:

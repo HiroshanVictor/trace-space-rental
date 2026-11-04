@@ -38,13 +38,18 @@ function changeLanguage(code){
  setLanguage(code);render();restoreForms(app,forms);
  app.querySelectorAll('form[data-form="booking"]').forEach(replaceWithQuote);
  app.querySelectorAll('input,select,textarea').forEach(localizeValidation);
- (app.querySelector(`[role="dialog"] [data-language="${code}"]`)||app.querySelector(`[data-language="${code}"]`))?.focus({preventScroll:true});
+ (app.querySelector('[role="dialog"] [data-language-toggle]')||app.querySelector('[data-language-toggle]'))?.focus({preventScroll:true});
  window.scrollTo(scrollX,scrollY);
+}
+function closeLanguageDropdowns(target){
+ for(const dropdown of app.querySelectorAll('.language-switcher[open]')){
+  if(!dropdown.contains(target))dropdown.open=false;
+ }
 }
 const adminRoutes=['dashboard','manage-spaces','bookings','calendar','inquiries','customers','blackouts','reports','settings'];
 const routeTitles=()=>({'dashboard':t("Dashboard"),'manage-spaces':t("Spaces Management"),'bookings':t("Reservations"),'calendar':t("Availability Calendar"),'inquiries':t("Customer Inquiries"),'customers':t("Customers"),'blackouts':t("Unavailability & Maintenance"),'reports':t("Reports & Exports"),'settings':t("Company Settings")});
 const navItems=[['dashboard','dashboard'],['manage-spaces','spaces'],['calendar','calendar'],['bookings','bookings'],['inquiries','inquiries'],['customers','customers'],['blackouts','block'],['reports','report'],['settings','settings']];
-const state={admin:false,route:'home',data:null,modal:null,search:'',type:'all',status:'all',calendarDay:localDay(),publicDay:localDay(),publicEvents:[],publicLoadedDay:null,publicLoading:false,publicError:'',publicSpaceId:'all',publicActivity:[],publicBookingCounts:null,publicActivityLoading:true,publicActivityError:'',publicSummaryError:'',bookingActivityFilter:'popular',activeInquiryDay:'',menu:false,publicMenuOpen:false,assistantOpen:false,inquiryTermsAccepted:false,loading:true,authError:'',activeInquirySpace:'',toast:null};
+const state={admin:false,route:'home',data:null,modal:null,search:'',type:'all',status:'all',calendarDay:localDay(),publicDay:localDay(),publicEvents:[],publicLoadedDay:null,publicLoading:false,publicError:'',publicSpaceId:'all',publicActivity:[],publicBookingCounts:null,publicActivityLoading:true,publicActivityError:'',publicSummaryError:'',bookingActivityFilter:'popular',findSpaceIndex:0,activeInquiryDay:'',menu:false,publicMenuOpen:false,assistantOpen:false,inquiryTermsAccepted:false,loading:true,authError:'',activeInquirySpace:'',toast:null};
 function updatePublicHeader(){document.documentElement.classList.toggle('public-nav-scrolled',window.scrollY>42)}
 function compactPublicCalendar(){
  if(state.route!=='availability')return;
@@ -225,26 +230,30 @@ function findSpaceShowcase(spaces){
   auditorium:'Bring a group together for a presentation, seminar or shared event. Let the TRACE team know the format and timing you have in mind so they can review your request and help coordinate the details.',
   desk:'Settle in for individual focus, independent work or a productive day alongside a community of innovators. Choose your preferred schedule and share any requirements with TRACE when you send your booking request.'
  };
- return `<section class="find-space-section" aria-labelledby="find-space-title"><header class="find-space-heading"><div><div class="eyebrow">EXPLORE TRACE</div><h2 id="find-space-title">Find your Space</h2><p>Scroll to discover our venues. Each space has its own image, details and booking request.</p></div><span class="find-space-count">${count} spaces</span></header><div class="find-space-track"><div class="find-space-stage">${list.map((space,index)=>{
+ return `<section class="find-space-section" aria-labelledby="find-space-title"><header class="find-space-heading"><div><div class="eyebrow">EXPLORE TRACE</div><h2 id="find-space-title">Find your Space</h2><p>Scroll inside the showcase to discover our venues. Each space has its own image, details and booking request.</p></div><span class="find-space-count">${count} spaces</span></header><div class="find-space-track"><div class="find-space-stage" tabindex="0" role="region" aria-labelledby="find-space-title">${list.map((space,index)=>{
   const description=spaceText(space,'description')||'A welcoming setting for your next meeting, workshop, event or workday.';
   return `<article class="find-space-card ${index===0?'is-active':''}" data-find-space-card="${index}" aria-hidden="${index!==0}" ${index!==0?'inert':''}><div class="find-space-copy"><div class="eyebrow">${h(typeLabel(space.type))} <span>${String(index+1).padStart(2,'0')} / ${count}</span></div><h3>${h(spaceText(space))}</h3><p>${h(description)} ${h(context[space.type]||context.meeting)}</p><div class="find-space-rate"><small>Starting from</small><strong>${rateOf(space)}</strong></div><div class="find-space-actions"><button class="btn find-space-book" data-action="public-request" data-id="${h(space.id)}">Book Now ${ic('arrow')}</button><div class="find-space-arrows"><button type="button" data-action="find-space-step" data-index="${index}" data-direction="-1" aria-label="Previous space" ${index===0?'disabled':''}><span aria-hidden="true">←</span> Previous</button><button type="button" data-action="find-space-step" data-index="${index}" data-direction="1" aria-label="Next space" ${index===list.length-1?'disabled':''}>Next <span aria-hidden="true">→</span></button></div></div></div><div class="find-space-image" role="img" aria-label="${h(spaceText(space))}" style="${spaceImage(space)}"></div></article>`;
- }).join('')}</div><div class="find-space-steps" aria-hidden="true">${list.map((_,index)=>`<div class="find-space-step" data-find-space-step="${index}"></div>`).join('')}</div></div></section>`;
+ }).join('')}</div></div></section>`;
 }
 function updateFindSpaceOnScroll(){
- const section=document.querySelector('.find-space-section');
- if(!section)return;
- const steps=[...section.querySelectorAll('[data-find-space-step]')];
- const cards=[...section.querySelectorAll('[data-find-space-card]')];
- if(!steps.length||!cards.length)return;
- const midpoint=window.innerHeight*.52;
- let activeIndex=0;
- for(const step of steps){if(step.getBoundingClientRect().top<=midpoint)activeIndex=Number(step.dataset.findSpaceStep)}
+ const stage=app.querySelector('.find-space-stage');
+ if(!stage||!stage.clientHeight)return;
+ const cards=[...stage.querySelectorAll('[data-find-space-card]')];
+ if(!cards.length)return;
+ const activeIndex=Math.min(cards.length-1,Math.max(0,Math.round(stage.scrollTop/stage.clientHeight)));
+ state.findSpaceIndex=activeIndex;
  cards.forEach((card,index)=>{
   const active=index===activeIndex;
   card.classList.toggle('is-active',active);
   card.setAttribute('aria-hidden',String(!active));
   if(active)card.removeAttribute('inert');else card.setAttribute('inert','');
  });
+}
+function restoreFindSpaceScroll(){
+ const stage=app.querySelector('.find-space-stage');
+ if(!stage)return;
+ stage.scrollTop=state.findSpaceIndex*stage.clientHeight;
+ updateFindSpaceOnScroll();
 }
 function campusStory(spaces){const desks=spaces.find(s=>s.type==='desk')||spaces[0],gather=spaces.find(s=>s.type==='auditorium')||spaces[1]||spaces[0],meeting=spaces.find(s=>s.type==='meeting')||spaces[0];return `<section class="campus-story"><div class="campus-story-copy"><div class="eyebrow">TRACE EXPERT CITY · MARADANA, COLOMBO</div><h2>A restored campus made for work, learning and gathering.</h2><p>Choose a focused meeting room, a flexible co-working desk or a setting for your next large event. Every inquiry is reviewed by the TRACE team so the space, schedule and requirements fit together.</p><div class="campus-notes"><span><b>${spaces.length}</b> active spaces to explore</span><span><b>${meeting.capacity}+</b> people in our larger rooms</span><span><b>One team</b> to confirm your booking</span></div><div class="campus-actions"><button class="btn dark" data-go="catalog">${t("Explore spaces")} ${ic('arrow')}</button><button class="text-button" data-go="availability">${ic('calendar')} ${t("View booked times")}</button></div></div><div class="campus-story-images"><div class="story-image story-large" style="${spaceImage(desks)}"><span>Flexible workspaces</span></div><div class="story-image story-small" style="${spaceImage(gather)}"><span>Ideas in motion</span></div></div></section><section class="planning-band"><div><div class="eyebrow">A SIMPLE WAY TO PLAN</div><h2>Tell us what you are making space for.</h2></div><div class="planning-steps"><article><span>01</span><h3>Choose a setting</h3><p>Browse spaces by the kind of work, event or session you are planning.</p></article><article><span>02</span><h3>Check the day</h3><p>Use the public calendar to see occupied times before you send your request.</p></article><article><span>03</span><h3>Plan together</h3><p>Our team confirms availability and follows up on your event details.</p></article></div><button class="btn orange" data-action="planning-catalog">Book Now ${ic('arrow')}</button></section>`}
 function homePublic(){const spaces=publicSpaceOrder(state.data.spaces.filter(s=>s.is_active)),page=homePublicLegacy(),start=page.indexOf('<section class="public-section">'),end=page.indexOf('</section><section class="feature-band">',start);return start<0||end<0?page:page.slice(0,start)+frequentBookingSpaces(spaces)+findSpaceShowcase(spaces)+bookingOverview()+campusStory(spaces)+page.slice(end+10)}
@@ -378,7 +387,7 @@ function modalInquiryView(i){return modalFrame(t('Inquiry details'),`
  ${inquiryEmailEnabled()&&i.notification_status!=='sent'?`<button class="btn ghost" type="button" data-action="retry-inquiry-email" data-id="${h(i.id)}" ${state.emailSending===i.id?'disabled':''}>${ic('inquiries')} ${t('Retry email notification')}</button><p class="note">${t('Email retries are limited to once per minute. The inquiry is already saved.')}</p>`:''}
  <div class="divider"></div><form data-form="inquiry-status" data-id="${h(i.id)}" class="form-grid">${selectField(t('Follow-up status'),'status',[['new',t('New')],['contacted',t('Contacted')],['converted',t('Converted')],['closed',t('Closed')]],i.status)}<div class="form-actions"><button class="btn ghost" type="button" data-action="close-modal">${t('Close')}</button><button class="btn soft" type="submit">${t('Save status')}</button><button class="btn" type="button" data-action="convert-inquiry" data-id="${h(i.id)}">${t('Create booking')}</button></div></form>`)}
 function confirmDialog(title,body,action,id,label=t("Confirm")){return modalFrame(title,`<p>${body}</p><div class="form-actions"><button class="btn ghost" data-action="close-modal">${t("Keep record")}</button><button class="btn danger" data-action="${action}" data-id="${h(id)}">${label}</button></div>`,true)}
-function render(){if(state.startupError){app.innerHTML=`<div class="auth-wrap"><div class="auth-card">${languageSelector()}<h2>${t("Workspace could not start")}</h2><p>${h(translateError(state.startupError))}</p><p>${t("Check")} <code>${"config.js"}</code> ${t("and your internet connection. For offline demo mode, leave the Supabase settings blank.")}</p><button class="btn" onclick="location.reload()">${t("Retry")}</button></div></div>`;return}if(!state.data){app.innerHTML=`<div class="loading-screen">${languageSelector()}<img class="loading-logo" src="./public/assets/trace-logo.png" alt="TRACE"><p>${t("Loading workspace…")}</p></div>`;return}app.innerHTML=state.admin&&adminRoutes.includes(state.route)?adminShell():state.route==='login'?loginPage():state.route==='catalog'?catalogPublic():state.route==='detail'?detailPublic():state.route==='request'?requestPublic():state.route==='availability'?publicCalendar():homePublic();if(state.modal)app.insertAdjacentHTML('beforeend',state.modal());if(!state.admin&&state.route==='home'){updateFindSpaceOnScroll();animateBookingCounts()}}
+function render(){if(state.startupError){app.innerHTML=`<div class="auth-wrap"><div class="auth-card">${languageSelector()}<h2>${t("Workspace could not start")}</h2><p>${h(translateError(state.startupError))}</p><p>${t("Check")} <code>${"config.js"}</code> ${t("and your internet connection. For offline demo mode, leave the Supabase settings blank.")}</p><button class="btn" onclick="location.reload()">${t("Retry")}</button></div></div>`;return}if(!state.data){app.innerHTML=`<div class="loading-screen">${languageSelector()}<img class="loading-logo" src="./public/assets/trace-logo.png" alt="TRACE"><p>${t("Loading workspace…")}</p></div>`;return}app.innerHTML=state.admin&&adminRoutes.includes(state.route)?adminShell():state.route==='login'?loginPage():state.route==='catalog'?catalogPublic():state.route==='detail'?detailPublic():state.route==='request'?requestPublic():state.route==='availability'?publicCalendar():homePublic();if(state.modal)app.insertAdjacentHTML('beforeend',state.modal());if(state.route==='home'){restoreFindSpaceScroll();if(!state.admin)animateBookingCounts()}}
 function getPayload(form){return Object.fromEntries(new FormData(form).entries())}
 function nums(row,keys){for(const k of keys)row[k]=Number(row[k]||0);return row}
 function replaceWithQuote(form){
@@ -416,9 +425,13 @@ async function clickAction(target){
  if(act==='public-menu-toggle'){state.publicMenuOpen=!state.publicMenuOpen;render();return}
  if(act==='toggle-trace-guide'){state.assistantOpen=!state.assistantOpen;render();return}
  if(act==='find-space-step'){
-  const steps=[...app.querySelectorAll('.find-space-section [data-find-space-step]')];
-  const next=steps[Number(target.dataset.index)+Number(target.dataset.direction)];
-  if(next)next.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+  const stage=target.closest('.find-space-stage');
+  const cards=[...stage.querySelectorAll('[data-find-space-card]')];
+  const next=cards[Number(target.dataset.index)+Number(target.dataset.direction)];
+  if(next){
+   stage.focus({preventScroll:true});
+   stage.scrollTo({top:next.offsetTop,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  }
   return;
  }
  if(act==='booking-activity-filter'){
@@ -569,6 +582,7 @@ async function submitForm(form){const f=getPayload(form),which=form.dataset.form
 }
 // Event delegation makes dynamically rendered screens and dialogs fully interactive.
 document.addEventListener('click',async e=>{
+ closeLanguageDropdowns(e.target);
  const language=e.target.closest('[data-language]');if(language){e.preventDefault();changeLanguage(language.dataset.language);return}
  const link=e.target.closest('[data-go]');if(link){e.preventDefault();if(link.dataset.go==='request'&&link.dataset.spaceId){state.activeInquirySpace=link.dataset.spaceId;state.activeInquiryDay=''}navigate(link.dataset.go);return}
  const target=e.target.closest('[data-action]');if(!target)return;
@@ -611,9 +625,18 @@ document.addEventListener('input',e=>{
  }
  if(el.matches('[data-quote-field]'))replaceWithQuote(el.closest('form'));
 });
-document.addEventListener('keydown',e=>{if(e.key==="Escape"&&state.modal){state.modal=null;render()}});
+document.addEventListener('focusin',e=>closeLanguageDropdowns(e.target));
+document.addEventListener('keydown',e=>{
+ if(e.key!=="Escape")return;
+ const dropdown=app.querySelector('.language-switcher[open]');
+ if(dropdown){e.preventDefault();dropdown.open=false;dropdown.querySelector('summary').focus();return}
+ if(state.modal){state.modal=null;render()}
+});
 window.addEventListener('scroll',updatePublicHeader,{passive:true});
-window.addEventListener('scroll',updateFindSpaceOnScroll,{passive:true});
+app.addEventListener('scroll',e=>{
+ if(e.target.matches('.find-space-stage'))updateFindSpaceOnScroll();
+},{capture:true,passive:true});
+window.addEventListener('resize',restoreFindSpaceScroll,{passive:true});
 updatePublicHeader();
 render();
 (async()=>{

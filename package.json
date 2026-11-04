@@ -11,5 +11,10 @@
     "configure": "node scripts/configure.mjs",
     "check:cloud": "node scripts/check-cloud.mjs"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "nodemailer": "^10.3.1"
+  }
 }
