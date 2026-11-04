@@ -1,0 +1,27 @@
+.staff-calendar .calendar-toolbar{align-items:flex-end;gap:16px;flex-wrap:wrap}
+.staff-calendar .calendar-toolbar .actions{align-items:flex-end;flex-wrap:wrap}
+.staff-calendar .field{margin:0}
+.staff-calendar-summary{color:var(--muted,#63738b);font-size:.85rem;margin:18px 0}
+.staff-calendar-legend{margin:12px 0;flex-wrap:wrap}
+.staff-calendar-empty{padding:16px;border:1px solid #d8e5fb;border-radius:10px;background:#f2f6ff;line-height:1.65}
+.staff-cal-grid{min-width:calc(165px + var(--hours)*66px)}
+.staff-cal-header,.staff-cal-row{display:grid;grid-template-columns:165px minmax(0,1fr)}
+.staff-cal-header{background:#f5f8fe;color:#627390;font-size:.72rem}
+.staff-cal-header>span{padding:13px 10px}
+.staff-cal-hours,.staff-cal-cells{display:grid;grid-template-columns:repeat(var(--hours),minmax(0,1fr))}
+.staff-cal-hours span{padding:13px 5px;border-left:1px solid #e7edf7}
+.staff-cal-row{border-top:1px solid #e3eaf5}
+.staff-cal-title{padding:12px 10px;border-right:1px solid #e3eaf5;position:sticky;left:0;background:white;z-index:2;font-size:.8rem}
+.staff-cal-title small{display:block;margin:4px 0;color:#64748b;font-size:.72rem}
+.staff-cal-times{position:relative;min-width:0}
+.staff-cal-cells{position:absolute;inset:0}
+.staff-cal-cell{display:block;width:100%;border:0;border-right:1px solid #edf1f7;border-radius:0;background:white;padding:0;cursor:pointer}
+.staff-cal-cell:hover{background:#edf4ff}
+.staff-cal-cell:focus-visible{outline:2px solid #2353ce;outline-offset:-2px}
+.staff-cal-event{position:absolute;height:50px;min-width:4px;z-index:1;border:1px solid #8fb1ee;border-radius:7px;padding:5px 8px;text-align:left;overflow:hidden;white-space:nowrap;background:#e4edff;color:#123c80;cursor:pointer;font:inherit;font-size:.74rem}
+.staff-cal-event strong,.staff-cal-event small{display:block;overflow:hidden;text-overflow:ellipsis}
+.staff-cal-event small{margin-top:4px;font-size:.67rem}
+.staff-cal-event.pending{background:#fff2d7;border-color:#ebc16d;color:#805715}
+.staff-cal-event.block{background:#ffe9dd;border-color:#ebad8c;color:#8d3a16}
+.staff-cal-event:hover,.staff-cal-event:focus-visible{filter:brightness(.95);outline:2px solid #2353ce;outline-offset:-2px}
+@media(max-width:600px){.staff-calendar{padding:14px}.staff-calendar .calendar-toolbar>.field{width:100%}.staff-calendar .calendar-toolbar select{max-width:100%}}

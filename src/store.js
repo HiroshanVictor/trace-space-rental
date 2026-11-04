@@ -4,6 +4,8 @@ import {dayBounds,publicFromRecords} from './publicAvailability.js';
 import {summarizeBookingCounts,summarizeSpaceActivity} from './publicActivity.js';
 import {notifySavedInquiry,inquiryDeliverySummary} from './inquiryDelivery.js';
 import {bookingEmailResult} from './reservationEmails.js';
+import {validateAlcohol} from './alcohol.js';
+import {calendarRecords,readCalendarTable} from './staffCalendar.js';
 const KEY='tec-spacerental-v2';
 const config=window.SPACE_RENTAL_CONFIG||{};
 let cloudClient=null;
@@ -69,6 +71,16 @@ export async function load(admin){
   result.settings=result.org_settings?.[0]||{id:1,company_name:'Trace Expert City',email:'',phone:'',address:'Sri Lanka',currency:'LKR',opening_hours:'8:00 AM – 8:00 PM',about:''};
   for(const t of ['spaces','bookings','customers','inquiries','blackouts']) if(!result[t])result[t]=[];
   return result;
+}
+/** Authenticated staff schedule; existing table RLS remains in force. */
+export async function loadStaffSchedule(day){
+  if(!cloudEnabled){localData=readDemo();return clone(calendarRecords(localData,day));}
+  if(!cloudAuth)throw Error('Staff access is required.');
+  const sup=await client();
+  const [bookings,blackouts]=await Promise.all([
+    readCalendarTable(sup,'bookings',day),readCalendarTable(sup,'blackouts',day)
+  ]);
+  return {bookings,blackouts};
 }
 /** Safe anonymous schedule: public RPC returns dates, venue IDs and desk counts only. */
 export async function loadPublicSchedule(day){
@@ -142,6 +154,7 @@ export async function remove(table,recordId){
   return query(table,'delete',null,recordId);
 }
 export async function submitInquiry(payload){
+  payload={...payload,...validateAlcohol(payload)};
   if(!cloudEnabled){
     const row=localSave('inquiries','insert',{...payload,status:'new',notification_status:'not_configured'});
     return {ok:true,id:row.id,notification:{status:'not_configured'}};

@@ -1,4 +1,5 @@
 /* Shared, dependency-free reservation rules.  All time windows are [start, end). */
+import {validateAlcohol} from './alcohol.js';
 export const HOLD_STATUSES = new Set(['pending', 'confirmed', 'completed']);
 export const SPACE_TYPES = ['meeting', 'auditorium', 'desk'];
 export const RATE_TYPES = ['hour', 'day', 'week', 'month'];
@@ -88,7 +89,7 @@ export function validateBooking(booking,space,allBookings,blackouts) {
     const policy=bookingPolicy(space,booking.start_at,booking.end_at,booking.rate_type);
     if(!policy.ok)throw Error(policy.reason);
     if(['confirmed','completed'].includes(booking.status)&&Number(booking.amount_paid||0)<advanceRequired(space,booking.amount))throw Error('Record the required advance before confirming this reservation.');
-    if(booking.alcohol_planned&&!booking.alcohol_terms_accepted)throw Error('Alcohol conditions must be accepted.');
+    validateAlcohol(booking);
   }
   if (booking.status !== 'cancelled') {
     const extension=allBookings.find(b=>b.id===booking.extension_of);

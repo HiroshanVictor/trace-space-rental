@@ -1,5 +1,7 @@
 import {safeHtml as h} from './engine.js';
 import {getLanguage,languages,t} from './i18n.js';
+import {syncAlcoholFields} from './alcoholUI.js';
+import {ALCOHOL_ACK_REQUIRED} from './alcohol.js';
 
 export function languageSelector({compact=false} = {}) {
   const current=languages.find(language=>language.code===getLanguage());
@@ -26,11 +28,14 @@ export function restoreForms(root, snapshots) {
     const form = Array.from(root.querySelectorAll('form')).find(el => el.dataset.form === snapshot.type && el.dataset.id === snapshot.id);
     if (!form) continue;
     for (const field of snapshot.fields) {
-      const el = form.elements.namedItem(field.name);
+      const named = form.elements.namedItem(field.name);
+      // RadioNodeList.value alone would select the last radio in the snapshot.
+      const el = named?.length&&!named.tagName?Array.from(named).find(input=>input.value===field.value):named;
       if (!el) continue;
-      el.value = field.value;
+      if(el.type!=='radio')el.value = field.value;
       if (el.type === 'checkbox' || el.type === 'radio') el.checked = field.checked;
     }
+    syncAlcoholFields(form);
   }
 }
 
@@ -39,7 +44,7 @@ export function localizeValidation(input) {
   input.setCustomValidity('');
   const valid = input.validity;
   let message = '';
-  if (valid.valueMissing) message = t('Please fill out this field.');
+  if (valid.valueMissing) message = input.matches('[data-alcohol-acknowledgement]')?t(ALCOHOL_ACK_REQUIRED):t('Please fill out this field.');
   else if (valid.typeMismatch) message = t(input.type === 'email' ? 'Please enter a valid email address.' : 'Please enter a valid URL.');
   else if (valid.rangeUnderflow) message = t('Please enter a value of at least {min}.',{min:input.min});
   else if (valid.rangeOverflow) message = t('Please enter a value no greater than {max}.',{max:input.max});

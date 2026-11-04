@@ -1,0 +1,12 @@
+.alcohol-options{min-width:0;margin:0;padding:0;border:0}
+.alcohol-options legend{max-width:100%;padding:0;margin:0 0 .4rem;font-size:.84rem;font-weight:700;line-height:1.5;color:#354860}
+.alcohol-choices{display:flex;flex-wrap:wrap;gap:.35rem 1.25rem}
+.alcohol-options .alcohol-control{display:flex;align-items:center;gap:.5rem;min-height:32px;margin:0;padding:0;font-size:.84rem;line-height:1.5;cursor:pointer;color:#354860}
+.alcohol-options .alcohol-control input{flex:0 0 auto;width:17px;height:17px;min-width:17px;min-height:17px;margin:0;padding:0;accent-color:#2158d1;cursor:pointer}
+.alcohol-options .alcohol-control input:focus-visible{outline:2px solid #2158d1;outline-offset:3px}
+.alcohol-options .alcohol-control span{min-width:0}
+.alcohol-options .alcohol-acknowledgement{align-items:flex-start;margin-top:.5rem}
+.alcohol-options .alcohol-acknowledgement input{margin-top:.16rem}
+.alcohol-options .alcohol-approval-note{margin:.5rem 0 0;line-height:1.55;color:#52657d}
+.alcohol-options [data-alcohol-acknowledgement-row][hidden]{display:none!important}
+@media(max-width:580px){.alcohol-options legend,.alcohol-options .alcohol-control{font-size:.82rem}.alcohol-choices{gap:.25rem 1rem}}
