@@ -42,7 +42,7 @@ test('root inquiry email is sent with a stable subject, Reply-To, and durable id
   const response=await handler(new Request('https://site.test/.netlify/functions/send-reservation-email',{method:'POST',body:JSON.stringify({inquiry_id:id})}));
   assert.equal(response.status,200);
   const sent=calls.find(x=>x.url==='https://api.resend.com/emails');const body=JSON.parse(sent.options.body);
-  assert.equal(body.subject,conversation.subject);assert.equal(body.reply_to,'frontdesk@example.test');assert.deepEqual(body.to,['customer@example.test']);
+  assert.equal(body.subject,conversation.subject);assert.equal(body.reply_to,'frontdesk@example.test');assert.deepEqual(body.to,['customer@example.test']);assert.equal(body.from,'TRACE Expert City Reservations <bookings@example.test>');
   assert.equal(sent.options.headers['Idempotency-Key'],outbox.idempotency_key);
 });
 

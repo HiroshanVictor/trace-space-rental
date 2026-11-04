@@ -1,5 +1,7 @@
 # Reservation email conversations
 
+Apply `supabase/12_reservation_email_conversations.sql`, `supabase/13_fix_reservation_email_rls.sql`, and `supabase/14_reservation_email_workflow_hardening.sql` in that order. Migration 14 adds default payment-deadline safeguards, reviewed non-payment cancellations, bounded outbox retries, and a staff-only email-history RPC; it does not send mail or modify a reservation by itself.
+
 Run `supabase/12_reservation_email_conversations.sql` after the existing database migrations, then deploy the Netlify functions. The migration generates one non-sensitive `TRC-…` reference when a public inquiry is saved. It creates one conversation whose subject remains:
 
 `TRACE Expert City | Space Reservation | {reference}`
@@ -22,7 +24,9 @@ Configure the Resend webhook endpoint for delivery events and, if later approved
 
 The scheduled `expire-payment-holds` function runs every 15 minutes. It is disabled unless `org_settings.advance_hold_enabled` is enabled by management. It marks a 72-hour (configurable) unpaid hold for staff review and sends a thread follow-up. It does not cancel the booking, charge a fee, or issue a refund automatically.
 
-The payment deadline must be set by staff on a pending booking. `payment_instructions` belongs in `org_settings` and is included only when a payment request is sent. Store payment references and staff-recorded refunds on the booking; the system does not create a payment, refund, or cancellation fee.
+Pending reservations receive a 72-hour payment deadline by default from `org_settings.advance_hold_hours`. If an event starts sooner, staff must select an earlier deadline; a deadline after the reservation starts is rejected. `payment_instructions` belongs in `org_settings` and is included only when a payment request is sent. Store payment references, received time, cancellation reason, and staff-recorded refunds on the booking; the system does not create a payment, refund, or cancellation fee. An overdue hold is only marked for review. Staff may then record a reviewed non-payment cancellation, which releases availability and sends the cancellation email.
+
+Signed-in staff can call `staff_reservation_email_history(booking_id)` to show event type, attempt count, last error, acceptance, and delivery state. It deliberately excludes recipients and message bodies. The email tables remain RLS-protected and are not publicly readable.
 
 Before enabling real delivery, use a staging verified sender and run this manual check with Gmail and Outlook:
 

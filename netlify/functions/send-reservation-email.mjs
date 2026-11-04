@@ -36,7 +36,7 @@ export function createHandler({env=process.env,fetchImpl=globalThis.fetch}={}){
     return reply(202,{ok:true,status:'awaiting_thread'});
    }
    const message=buildReservationEmail({event:outbox.event_type,conversation,inquiry,booking,space,paymentInstructions:(await db('org_settings?id=eq.1&select=payment_instructions'))?.[0]?.payment_instructions||''});
-   const sent=await fetchImpl('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${resendKey}`,'Content-Type':'application/json','Idempotency-Key':outbox.idempotency_key},body:JSON.stringify({from:`TRACE Expert City | Reservations <${from}>`,reply_to:replyTo,to:[conversation.customer_email],subject:message.subject,text:message.text,html:message.html,headers:threading.headers}),signal:AbortSignal.timeout(10000)});
+   const sent=await fetchImpl('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${resendKey}`,'Content-Type':'application/json','Idempotency-Key':outbox.idempotency_key},body:JSON.stringify({from:`TRACE Expert City Reservations <${from}>`,reply_to:replyTo,to:[conversation.customer_email],subject:message.subject,text:message.text,html:message.html,headers:threading.headers}),signal:AbortSignal.timeout(10000)});
    const accepted=await sent.json().catch(()=>null);if(!sent.ok||!accepted?.id)throw Error('provider_rejected');
    let rfcMessageId='';
    try{const lookup=await fetchImpl(`https://api.resend.com/emails/${accepted.id}`,{headers:{Authorization:`Bearer ${resendKey}`},signal:AbortSignal.timeout(8000)});const details=await lookup.json().catch(()=>null);if(lookup.ok&&typeof details?.message_id==='string')rfcMessageId=details.message_id;}catch{/* webhook will later supply the RFC Message-ID. */}
