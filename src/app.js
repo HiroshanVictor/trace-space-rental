@@ -7,6 +7,7 @@ import {imageSet} from './data.js';
 import {venueImageFor} from './venueImages.js';
 import {localDay,shiftDay} from './publicAvailability.js';
 import {rankSpaceActivity} from './publicActivity.js';
+import {inquiryDeliverySummary} from './inquiryDelivery.js';
 
 const ICONS={
   dashboard:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
@@ -384,7 +385,7 @@ function modalInquiryView(i){return modalFrame(t('Inquiry details'),`
  <div style="margin-top:16px">${pair(t('Name'),i.name)}${pair(t('Email'),i.email)}${pair(t('Phone'),i.phone)}${pair(t('Space'),spaceText(findSpace(i.space_id)))}${pair(t('Preferred start'),dateTime(i.start_at))}${pair(t('Preferred end'),dateTime(i.end_at))}${pair(t('Event nature'),i.event_nature)}${pair(t('External services'),i.outside_services)}${pair(t('Alcohol planned'),i.alcohol_planned?t('Yes'):t('No'))}${pair(t('Message'),i.message)}${pair(t('Received'),dateTime(i.created_at))}</div>
  <div class="divider"></div><h3>${t('Email notification')}</h3>
  ${pair(t('Status'),inquiryEmailLabel(i))}${pair(t('Email attempts'),i.notification_attempts||0)}${pair(t('Last email attempt'),dateTime(i.notification_last_attempt_at))}
- ${inquiryEmailEnabled()&&i.notification_status!=='sent'?`<button class="btn ghost" type="button" data-action="retry-inquiry-email" data-id="${h(i.id)}" ${state.emailSending===i.id?'disabled':''}>${ic('inquiries')} ${t('Retry email notification')}</button><p class="note">${t('Email retries are limited to once per minute. The inquiry is already saved.')}</p>`:''}
+ ${inquiryEmailEnabled()||bookingEmailEnabled()?`<button class="btn ghost" type="button" data-action="retry-inquiry-email" data-id="${h(i.id)}" ${state.emailSending===i.id?'disabled':''}>${ic('inquiries')} ${t('Retry staff and customer emails')}</button><p class="note">${t('The inquiry is saved. Accepted emails are skipped; pending notifications follow their retry cooldown.')}</p>`:''}
  <div class="divider"></div><form data-form="inquiry-status" data-id="${h(i.id)}" class="form-grid">${selectField(t('Follow-up status'),'status',[['new',t('New')],['contacted',t('Contacted')],['converted',t('Converted')],['closed',t('Closed')]],i.status)}<div class="form-actions"><button class="btn ghost" type="button" data-action="close-modal">${t('Close')}</button><button class="btn soft" type="submit">${t('Save status')}</button><button class="btn" type="button" data-action="convert-inquiry" data-id="${h(i.id)}">${t('Create booking')}</button></div></form>`)}
 function confirmDialog(title,body,action,id,label=t("Confirm")){return modalFrame(title,`<p>${body}</p><div class="form-actions"><button class="btn ghost" data-action="close-modal">${t("Keep record")}</button><button class="btn danger" data-action="${action}" data-id="${h(id)}">${label}</button></div>`,true)}
 function render(){if(state.startupError){app.innerHTML=`<div class="auth-wrap"><div class="auth-card">${languageSelector()}<h2>${t("Workspace could not start")}</h2><p>${h(translateError(state.startupError))}</p><p>${t("Check")} <code>${"config.js"}</code> ${t("and your internet connection. For offline demo mode, leave the Supabase settings blank.")}</p><button class="btn" onclick="location.reload()">${t("Retry")}</button></div></div>`;return}if(!state.data){app.innerHTML=`<div class="loading-screen">${languageSelector()}<img class="loading-logo" src="./public/assets/trace-logo.png" alt="TRACE"><p>${t("Loading workspace…")}</p></div>`;return}app.innerHTML=state.admin&&adminRoutes.includes(state.route)?adminShell():state.route==='login'?loginPage():state.route==='catalog'?catalogPublic():state.route==='detail'?detailPublic():state.route==='request'?requestPublic():state.route==='availability'?publicCalendar():homePublic();if(state.modal)app.insertAdjacentHTML('beforeend',state.modal());if(state.route==='home'){restoreFindSpaceScroll();if(!state.admin)animateBookingCounts()}}
@@ -416,7 +417,7 @@ async function clickAction(target){
    const result=await retryInquiryEmail(id);
    try{await refresh()}catch{ /* The inquiry remains saved if refreshing fails. */ }
    if(state.modal===openModal)state.modal=()=>modalInquiryView(item('inquiries',id));
-   showToast(result.status==='sent'?t('Email notification sent.'):result.status==='not_configured'?t('Email is not configured. The inquiry remains saved.'):t('Email was not confirmed. Wait one minute, then retry. The inquiry remains saved.'),result.status!=='sent');
+   showToast(result.message?t(result.message):t('Email is not configured. The inquiry remains saved.'),result.status!=='sent');
   }finally{state.emailSending=null;const forms=captureForms(app);render();restoreForms(app,forms)}
   return;
  }
@@ -520,9 +521,7 @@ async function submitForm(form){const f=getPayload(form),which=form.dataset.form
   try{await refresh()}catch{ /* A refresh error must not turn a saved inquiry into a failed submission. */ }
   await navigate('catalog');
   if(!isCloud())showToast(t('Demo inquiry saved on this browser. Email notifications are not enabled.'));
-  else if(result.notification.status==='sent')showToast(t('Inquiry saved and email notification sent.'));
-  else if(result.notification.status==='not_configured')showToast(t('Inquiry saved for our staff. Email notifications are not configured.'));
-  else showToast(t('Inquiry saved for our staff. Email notification is pending; please do not submit again.'));
+  else {const delivery=inquiryDeliverySummary({staff:result.notification,customer:result.reservationEmail});showToast(t(delivery.message),delivery.status!=='sent');}
   return;
  }
  if(which==='space'){

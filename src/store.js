@@ -2,7 +2,7 @@ import {makeSeed,id} from './data.js';
 import {availabilityFor,validateBooking,validateSpace,intersects} from './engine.js';
 import {dayBounds,publicFromRecords} from './publicAvailability.js';
 import {summarizeBookingCounts,summarizeSpaceActivity} from './publicActivity.js';
-import {notifySavedInquiry} from './inquiryDelivery.js';
+import {notifySavedInquiry,inquiryDeliverySummary} from './inquiryDelivery.js';
 import {bookingEmailResult} from './reservationEmails.js';
 const KEY='tec-spacerental-v2';
 const config=window.SPACE_RENTAL_CONFIG||{};
@@ -158,8 +158,9 @@ export async function submitInquiry(payload){
   return {ok:true,id:inquiryId,notification,reservationEmail};
 }
 export async function retryInquiryEmail(inquiryId){
-  if(!inquiryEmailEnabled())return {status:'not_configured'};
-  return (await notifySavedInquiry({staffEndpoint:config.notifyInquiryEndpoint,reservationEndpoint:config.reservationEmailEndpoint,inquiryId})).staff;
+  if(!inquiryEmailEnabled()&&!reservationEmailEnabled())return {status:'not_configured'};
+  const delivery=await notifySavedInquiry({staffEndpoint:config.notifyInquiryEndpoint,reservationEndpoint:config.reservationEmailEndpoint,inquiryId});
+  return {...inquiryDeliverySummary(delivery),...delivery};
 }
 export async function sendBookingConfirmation(bookingId){
   if(!bookingEmailEnabled())return {status:'not_configured'};

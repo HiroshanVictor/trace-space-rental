@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import nodemailer from 'nodemailer';
-import {emailSettings,sendProviderEmail,smtpMessageId} from '../netlify/functions/lib/email-provider.mjs';
+import {emailSettings,sendProviderEmail,smtpMessageId,emailConfigurationIssues} from '../netlify/functions/lib/email-provider.mjs';
 import {createHandler as reservationHandler} from '../netlify/functions/send-reservation-email.mjs';
 import {createHandler as staffHandler} from '../netlify/functions/notify-inquiry.mjs';
 import {createHandler as legacyHandler} from '../netlify/functions/notify-booking.mjs';
 import {bookingEmailResult} from '../src/reservationEmails.js';
 import {buildConfig} from '../scripts/configure.mjs';
+import {notifySavedInquiry,inquiryDeliverySummary} from '../src/inquiryDelivery.js';
 
 const id='123e4567-e89b-12d3-a456-426614174000';
 // Deliberately fictitious credentials; no SMTP connection is made in this suite.
@@ -37,6 +38,7 @@ function fixture({sendMail,history=[],direct=false,recordFails=false}={}){
       if(!result.p_error){c.root_message_id||=result.p_message_id;c.last_message_id=result.p_message_id;}
       return new Response(null,{status:204});
     }
+    if(url.includes('reservation_email_outbox?'))return json([{status:results.some(result=>!result.p_error)?'accepted':'failed'}]);
     if(url.includes('reservation_email_conversations'))return json([c]);
     if(url.includes('reservation_email_messages'))return json(history);
     if(url.includes('inquiries?'))return json([inquiry]);
@@ -86,7 +88,7 @@ test('an unclaimed job never sends and a retry reuses its Message-ID',async()=>{
   const f=fixture();
   await f.handler(request({inquiry_id:id}));
   const response=await f.handler(request({inquiry_id:id}));
-  assert.equal((await response.json()).status,'nothing_to_send');assert.equal(f.messages.length,1);
+  assert.equal((await response.json()).status,'already_accepted');assert.equal(f.messages.length,1);
   f.setEvent('inquiry_received');await f.handler(request({inquiry_id:id}));
   assert.equal(f.messages[0].messageId,f.messages[1].messageId);
 });
@@ -142,6 +144,40 @@ test('staff alerts use INQUIRY_TO_EMAIL and no browser-supplied recipient',async
   }});
   assert.equal((await handler(request({inquiry_id:id}))).status,200);
   assert.deepEqual(sent.to,[env.INQUIRY_TO_EMAIL]);assert.equal(patch.notification_status,'sent');
+});
+
+test('the public inquiry flow invokes both real handlers and emails staff and customer independently',async()=>{
+  const customer=fixture();const staffMessages=[];
+  const staff=staffHandler({env,createTransportImpl:()=>({sendMail:async message=>{
+    staffMessages.push(message);return {accepted:message.to,rejected:[],messageId:message.messageId};
+  }}),fetchImpl:async(url,options)=>{
+    if(url.includes('claim_inquiry_notification'))return json([inquiry]);
+    assert.equal(options.method,'PATCH');return new Response(null,{status:204});
+  }});
+  const delivery=await notifySavedInquiry({staffEndpoint:'/staff',reservationEndpoint:'/customer',inquiryId:id,fetchImpl:async(url,options)=>{
+    const req=new Request(`https://site.test${url}`,options);
+    return url==='/staff'?staff(req):customer.handler(req);
+  }});
+  assert.equal(inquiryDeliverySummary(delivery).status,'sent');
+  assert.deepEqual(staffMessages[0].to,[env.INQUIRY_TO_EMAIL]);
+  assert.deepEqual(customer.messages[0].to,[inquiry.email]);
+  assert.equal(staffMessages.length,1);assert.equal(customer.messages.length,1);
+});
+
+test('SMTP error logs contain fixed codes and never raw credentials',async()=>{
+  const logs=[];
+  const handler=staffHandler({env,logger:{warn:(...args)=>logs.push(args)},createTransportImpl:()=>({sendMail:async()=>{throw Object.assign(Error(env.SMTP_PASS),{code:'EAUTH'});}}),fetchImpl:async url=>url.includes('claim_inquiry_notification')?json([inquiry]):new Response(null,{status:204})});
+  assert.equal((await handler(request({inquiry_id:id}))).status,502);
+  assert.match(JSON.stringify(logs),/smtp_auth_failed/);
+  assert.doesNotMatch(JSON.stringify(logs),/fake-test-password|fake-service-key/);
+});
+
+test('setup diagnostics identify variable names without exposing any configured values',()=>{
+  assert.deepEqual(emailConfigurationIssues(env),[]);
+  const issues=emailConfigurationIssues({...env,SMTP_HOST:'',SMTP_PORT:'',EMAIL_FROM_EMAIL:'wrong@gmail.com'});
+  assert.ok(issues.includes('SMTP_HOST'));assert.ok(issues.includes('SMTP_PORT'));
+  assert.ok(issues.includes('EMAIL_FROM_EMAIL must match SMTP_USER'));
+  assert.doesNotMatch(JSON.stringify(issues),/fake-test-password|trace-test@gmail.com|wrong@gmail.com/);
 });
 
 test('legacy booking endpoint also uses Gmail and still requires staff authorization',async()=>{

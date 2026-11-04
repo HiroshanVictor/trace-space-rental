@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {notifySavedInquiry} from '../src/inquiryDelivery.js';
+import {notifySavedInquiry,inquiryDeliverySummary} from '../src/inquiryDelivery.js';
 
 const id='12345678-1234-4234-8234-123456789abc';
 const json=(value,status=200)=>Response.json(value,{status});
@@ -22,4 +22,14 @@ test('a failed staff or customer delivery leaves the saved-inquiry notification 
     assert.equal(result.staff.status,failed==='/staff-alert'?'failed':'sent');
     assert.equal(result.customer.status,failed==='/customer-ack'?'failed':'accepted');
   }
+});
+
+test('a success message requires acceptance of both emails',()=>{
+  assert.equal(inquiryDeliverySummary({staff:{status:'sent'},customer:{status:'accepted'}}).status,'sent');
+  for(const status of ['failed','not_configured','nothing_to_send','awaiting_thread','pending']){
+    const summary=inquiryDeliverySummary({staff:{status:'sent'},customer:{status}});
+    assert.equal(summary.status,'pending');assert.match(summary.message,/customer email is pending/);
+  }
+  assert.match(inquiryDeliverySummary({staff:{status:'failed'},customer:{status:'accepted'}}).message,/staff notification is pending/);
+  assert.match(inquiryDeliverySummary({staff:{status:'failed'},customer:{status:'failed'}}).message,/Both email notifications are pending/);
 });

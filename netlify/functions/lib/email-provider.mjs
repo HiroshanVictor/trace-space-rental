@@ -3,6 +3,26 @@ import nodemailer from 'nodemailer';
 
 const address=value=>typeof value==='string'&&/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(value);
 const value=(env,key)=>String(env[key]||'').trim();
+// Only fixed operational codes may appear in logs or stored delivery failures.
+export function emailFailureCode(error){
+  const codes=['smtp_auth_failed','smtp_timeout','smtp_send_failed','smtp_recipient_rejected','smtp_invalid_response','provider_rejected','database_unavailable','conversation_unavailable','invalid_saved_recipient','email_not_configured'];
+  return codes.includes(error?.message)?error.message:'email_provider_unavailable';
+}
+
+export function emailConfigurationIssues(env){
+  const provider=value(env,'EMAIL_PROVIDER')||'resend';
+  if(!['resend','gmail_smtp'].includes(provider))return ['EMAIL_PROVIDER must be resend or gmail_smtp'];
+  const keys=provider==='gmail_smtp'?['SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASS','EMAIL_FROM_EMAIL']:['RESEND_API_KEY','RESEND_FROM_EMAIL'];
+  const issues=keys.filter(key=>!value(env,key));
+  if(provider==='gmail_smtp'){
+    if(value(env,'SMTP_HOST')&&value(env,'SMTP_HOST')!=='smtp.gmail.com')issues.push('SMTP_HOST must be smtp.gmail.com');
+    if(value(env,'SMTP_PORT')&&value(env,'SMTP_PORT')!=='465')issues.push('SMTP_PORT must be 465');
+    if(value(env,'SMTP_USER')&&!address(value(env,'SMTP_USER')))issues.push('SMTP_USER must be an email address');
+    if(value(env,'EMAIL_FROM_EMAIL')&&value(env,'EMAIL_FROM_EMAIL').toLowerCase()!==value(env,'SMTP_USER').toLowerCase())issues.push('EMAIL_FROM_EMAIL must match SMTP_USER');
+    if(value(env,'EMAIL_REPLY_TO')&&!address(value(env,'EMAIL_REPLY_TO')))issues.push('EMAIL_REPLY_TO must be an email address');
+  }
+  return issues;
+}
 
 // Shared by server functions and the build-time readiness check. Never serialize
 // this object into browser configuration or log transport options/errors.

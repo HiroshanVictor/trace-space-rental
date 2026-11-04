@@ -4,7 +4,10 @@
 .frequent-bookings-heading p{max-width:650px;margin:0;color:#657286}
 .frequent-bookings-note{flex-shrink:0;padding:8px 12px;border:1px solid #e3e9f0;border-radius:30px;background:#f7f9fc;color:#6d7a8b;font-size:.72rem;font-weight:750}
 .frequent-bookings .catalog-filter{margin-bottom:17px}
-.frequent-booking-card{min-width:0}
+.frequent-booking-card{min-width:0;position:relative;transform-origin:center;transition:transform .26s ease,box-shadow .26s ease,border-color .26s ease}
+@media(hover:hover) and (pointer:fine){
+ .frequent-booking-card:is(:hover,:focus-within){transform:translateY(-6px) scale(1.035);z-index:2;border-color:#aec6ef;box-shadow:0 22px 46px rgba(18,48,91,.17)}
+}
 .frequent-booking-card .space-cover{height:175px}
 .frequent-booking-card .space-body>p{min-height:42px}
 .frequent-bookings .activity-message{grid-column:1/-1;padding:28px 22px;border:1px dashed #ccd7e5;border-radius:14px;background:#fff;color:#657286}
@@ -15,4 +18,8 @@
  .frequent-bookings{padding:48px 17px 16px}
  .frequent-bookings-heading{align-items:start;flex-direction:column;gap:12px}
  .frequent-booking-card .space-cover{height:155px}
+}
+@media(prefers-reduced-motion:reduce){
+ .frequent-booking-card{transition:none}
+ .frequent-booking-card:is(:hover,:focus-within){transform:none}
 }

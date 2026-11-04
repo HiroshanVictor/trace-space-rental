@@ -1,14 +1,19 @@
-import {buildReservationEmail,threadHeaders,safeError} from './reservation-email-core.mjs';
-import {emailSettings,sendProviderEmail} from './lib/email-provider.mjs';
+import {buildReservationEmail,threadHeaders} from './reservation-email-core.mjs';
+import {emailSettings,sendProviderEmail,emailFailureCode,emailConfigurationIssues} from './lib/email-provider.mjs';
 const uuid=value=>typeof value==='string'&&/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(value);
-export function createHandler({env=process.env,fetchImpl=globalThis.fetch,createTransportImpl}={}){
+export function createHandler({env=process.env,fetchImpl=globalThis.fetch,createTransportImpl,logger=console}={}){
  return async req=>{
   const reply=(status,body,headers={})=>Response.json(body,{status,headers:{'Cache-Control':'no-store',...headers}});
   if(req.method!=='POST')return reply(405,{ok:false,code:'method_not_allowed'},{Allow:'POST'});
   let request;try{const raw=await req.text();if(raw.length>1024)return reply(413,{ok:false,code:'request_too_large'});request=JSON.parse(raw);}catch{return reply(400,{ok:false,code:'invalid_request'});}
   const {SUPABASE_URL:url,SUPABASE_SERVICE_ROLE_KEY:key}=env;
   const settings=emailSettings(env);
-  if(!url||!key||!settings?.replyTo)return reply(503,{ok:false,code:'not_configured'});
+  if(!url||!key||!settings?.replyTo){
+   const issues=[...['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY'].filter(name=>!env[name]),...emailConfigurationIssues(env)];
+   if(settings&&!settings.replyTo)issues.push('Set RESEND_REPLY_TO_EMAIL or INQUIRY_TO_EMAIL');
+   logger.warn('TRACE customer email setup incomplete:',issues);
+   return reply(503,{ok:false,code:'not_configured'});
+  }
   const base=url.replace(/\/$/,'');const headers={apikey:key,Authorization:`Bearer ${key}`,'Content-Type':'application/json'};
   const db=async(path,options={})=>{const res=await fetchImpl(`${base}/rest/v1/${path}`,{...options,headers:{...headers,...options.headers},signal:AbortSignal.timeout(10000)});if(!res.ok)throw Error('database_unavailable');return res.status===204?null:res.json();};
   let outbox;
@@ -24,7 +29,17 @@ export function createHandler({env=process.env,fetchImpl=globalThis.fetch,create
     outbox=(await db('rpc/claim_reservation_email_outbox',{method:'POST',body:JSON.stringify({p_id:request.outbox_id})}))?.[0];
    }else return reply(400,{ok:false,code:'invalid_request'});
   }catch{return reply(503,{ok:false,code:'database_unavailable'});}
-  if(!outbox)return reply(200,{ok:true,status:'nothing_to_send'});
+  if(!outbox){
+   // A retry can reach an already accepted acknowledgement. Report that state
+   // explicitly; no SMTP send is repeated and no recipient data is exposed.
+   if(uuid(request?.inquiry_id)){
+    try{
+     const rows=await db(`reservation_email_outbox?inquiry_id=eq.${request.inquiry_id}&event_type=eq.inquiry_received&select=status`);
+     if(rows?.some(row=>row.status==='accepted'))return reply(200,{ok:true,status:'already_accepted'});
+    }catch{return reply(503,{ok:false,code:'database_unavailable'});}
+   }
+   return reply(200,{ok:true,status:'nothing_to_send'});
+  }
   try{
    const [conversation]=await db(`reservation_email_conversations?id=eq.${outbox.conversation_id}&select=*`);
    const [inquiry]=outbox.inquiry_id?await db(`inquiries?id=eq.${outbox.inquiry_id}&select=*`):[];
@@ -50,7 +65,9 @@ export function createHandler({env=process.env,fetchImpl=globalThis.fetch,create
    await db('rpc/record_reservation_email_result',{method:'POST',body:JSON.stringify({p_outbox:outbox.id,p_provider_id:providerId,p_message_id:rfcMessageId,p_parent:threading.parent,p_references:threading.references,p_error:null})});
    return reply(200,{ok:true,status:'accepted',thread_ready:Boolean(rfcMessageId)});
   }catch(error){
-   try{await db('rpc/record_reservation_email_result',{method:'POST',body:JSON.stringify({p_outbox:outbox.id,p_provider_id:'',p_message_id:'',p_parent:'',p_references:[],p_error:safeError(error)})});}catch{/* The preserved sending row is recoverable with its idempotency key. */}
+   const failure=emailFailureCode(error);
+   logger.warn('TRACE customer email failed:',{provider:settings.provider,code:failure});
+   try{await db('rpc/record_reservation_email_result',{method:'POST',body:JSON.stringify({p_outbox:outbox.id,p_provider_id:'',p_message_id:'',p_parent:'',p_references:[],p_error:failure})});}catch{/* The preserved sending row is recoverable with its idempotency key. */}
    return reply(502,{ok:false,code:'email_pending'});
   }
  };
