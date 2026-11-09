@@ -258,7 +258,23 @@ function findSpaceShowcase(spaces){
  };
  return `<section class="find-space-section" aria-labelledby="find-space-title"><header class="find-space-heading"><div><div class="eyebrow">EXPLORE TRACE</div><h2 id="find-space-title">Find your Space</h2><p>Scroll inside the showcase to discover our venues. Each space has its own image, details and booking request.</p></div><span class="find-space-count">${count} spaces</span></header><div class="find-space-track"><div class="find-space-stage" tabindex="0" role="region" aria-labelledby="find-space-title">${list.map((space,index)=>{
   const description=spaceText(space,'description')||'A welcoming setting for your next meeting, workshop, event or workday.';
-  return `<article class="find-space-card ${index===0?'is-active':''}" data-find-space-card="${index}" aria-hidden="${index!==0}" ${index!==0?'inert':''}><div class="find-space-copy"><div class="eyebrow">${h(typeLabel(space.type))} <span>${String(index+1).padStart(2,'0')} / ${count}</span></div><h3>${h(spaceText(space))}</h3><p>${h(description)} ${h(context[space.type]||context.meeting)}</p><div class="find-space-rate"><small>Starting from</small><strong>${rateOf(space)}</strong></div><div class="find-space-actions"><button class="btn find-space-book" data-action="public-request" data-id="${h(space.id)}">Book Now ${ic('arrow')}</button><div class="find-space-arrows"><button type="button" data-action="find-space-step" data-index="${index}" data-direction="-1" aria-label="Previous space" ${index===0?'disabled':''}><span aria-hidden="true">←</span> Previous</button><button type="button" data-action="find-space-step" data-index="${index}" data-direction="1" aria-label="Next space" ${index===list.length-1?'disabled':''}>Next <span aria-hidden="true">→</span></button></div></div></div><div class="find-space-image" role="img" aria-label="${h(spaceText(space))}" style="${spaceImage(space)}"></div></article>`;
+  return `<article class="find-space-card ${index===0?'is-active':''}" data-find-space-card="${index}" aria-hidden="${index!==0}" ${index!==0?'inert':''}>
+   <div class="find-space-copy">
+    <div class="eyebrow">${h(typeLabel(space.type))} <span>${String(index+1).padStart(2,'0')} / ${count}</span></div>
+    <h3>${h(spaceText(space))}</h3>
+    <p>${h(description)} ${h(context[space.type]||context.meeting)}</p>
+    <div class="find-space-rate"><small>Starting from</small><strong>${rateOf(space)}</strong></div>
+   </div>
+   <div class="find-space-image" role="group" aria-label="${h(spaceText(space))} actions" style="${spaceImage(space)}">
+    <div class="find-space-image-actions">
+     <button class="btn find-space-book" data-action="public-request" data-id="${h(space.id)}">Book Now</button>
+     <div class="find-space-arrows">
+      <button type="button" data-action="find-space-step" data-index="${index}" data-direction="-1" aria-label="Previous space" ${index===0?'disabled':''}>Previous</button>
+      <button type="button" data-action="find-space-step" data-index="${index}" data-direction="1" aria-label="Next space" ${index===list.length-1?'disabled':''}>Next</button>
+     </div>
+    </div>
+   </div>
+  </article>`;
  }).join('')}</div></div></section>`;
 }
 function updateFindSpaceOnScroll(){
@@ -706,6 +722,29 @@ document.addEventListener('keydown',e=>{
  if(dropdown){e.preventDefault();dropdown.open=false;dropdown.querySelector('summary').focus();return}
  if(state.modal){state.modal=null;render()}
 });
+let findSpaceWheelLocked=false;
+window.addEventListener('wheel',e=>{
+ if(!e.deltaY)return;
+ const stage=app.querySelector('.find-space-stage');
+ if(!stage)return;
+ const bounds=stage.getBoundingClientRect();
+ if(e.clientY<bounds.top||e.clientY>bounds.bottom)return;
+ const insideStage=e.clientX>=bounds.left&&e.clientX<=bounds.right;
+ if(window.matchMedia('(max-width:760px)').matches&&insideStage)return;
+ const cards=[...stage.querySelectorAll('[data-find-space-card]')];
+ if(!cards.length)return;
+ const current=cards.reduce((closest,card,index)=>{
+  const distance=Math.abs(card.offsetTop-stage.scrollTop);
+  return distance<closest.distance?{index,distance}:closest;
+ },{index:0,distance:Infinity}).index;
+ const next=cards[current+(e.deltaY>0?1:-1)];
+ if(!next)return;
+ e.preventDefault();
+ if(findSpaceWheelLocked)return;
+ findSpaceWheelLocked=true;
+ stage.scrollTo({top:next.offsetTop,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+ window.setTimeout(()=>{findSpaceWheelLocked=false},450);
+},{passive:false,capture:true});
 window.addEventListener('scroll',updatePublicHeader,{passive:true});
 app.addEventListener('scroll',e=>{
  if(e.target.matches('.find-space-stage'))updateFindSpaceOnScroll();
