@@ -1,5 +1,8 @@
 // English is the message key and default. Each pair contains [Sinhala, Tamil].
 export const messages = {
+  'Need help using the site?':['වෙබ් අඩවිය භාවිතයට උදව් අවශ්‍යද?','தளத்தைப் பயன்படுத்த உதவி தேவையா?'],
+  'Ask TRACE':['TRACE වෙතින් අසන්න','TRACE-இடம் கேளுங்கள்'],
+  'TRACE Expert City is in Maradana, Colombo. Contact details are available in the Get in touch section at the bottom of the website.':['TRACE Expert City කොළඹ මරදානේ පිහිටා ඇත. සම්බන්ධතා විස්තර වෙබ් අඩවියේ පහළ ඇති අප අමතන්න කොටසෙන් ලබාගත හැක.','TRACE Expert City கொழும்பு மருதானையில் அமைந்துள்ளது. தொடர்பு விவரங்கள் இணையதளத்தின் கீழே உள்ள தொடர்புகொள்ளும் பகுதியில் கிடைக்கும்.'],
   'TRACE Guide':['TRACE මාර්ගෝපදේශය','TRACE வழிகாட்டி'],
   'Quick answers':['ඉක්මන් පිළිතුරු','விரைவான பதில்கள்'],
   'Open guide':['මාර්ගෝපදේශය විවෘත කරන්න','வழிகாட்டியைத் திறக்கவும்'],

@@ -13,11 +13,12 @@ export const guideQuestions=[
 const normalize=text=>String(text||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
 const contains=(text,phrase)=>/[a-z]/.test(phrase)?` ${text} `.includes(` ${phrase} `):text.includes(phrase);
 const intents=[
-  ['cancellation',['cancel','cancellation','cancellations','refund','refunds','අවලංගු','ආපසු ගෙව','ரத்து','பணத்திரும்பல்']],
+  ['cancellation',['cancel','cancellation','cancellations','refund','refunds','change','reschedule','modify','අවලංගු','ආපසු ගෙව','ரத்து','பணத்திரும்பல்']],
   ['alcohol',['alcohol','beer','wine','liquor','drink','drinks','මත්පැන්','මත්පැ','மது','மதுபானம்']],
   ['payment',['pay','payment','payments','paid','advance','deposit','half','confirm','confirmed','confirmation','checkout','ගෙව','තහවුරු','கட்டணம்','செலுத்த','உறுதிப்படுத்த']],
   ['pricing',['price','prices','pricing','cost','costs','rate','rates','how much','fee','fees','මිල','ගාස්තු','விலை','செலவு']],
   ['availability',['available','availability','calendar','schedule','free','date','dates','time','times','ලබාගත','කාලසටහ','දිනය','கிடைக்கும்','நாட்காட்டி','தேதி']],
+  ['location',['location','address','directions','located','where is trace','ලිපිනය','පිහිටා','முகவரி','அமைந்துள்ள']],
   ['account',['account','accounts','login','log in','sign in','register','registration','ගිණුම','පිවිස','கணக்கு','உள்நுழை']],
   ['booking',['book','booking','bookings','reserve','reservation','reservations','inquiry','request','වෙන්කර','වෙන් කර','වෙන්කිරී','විමසී','முன்பதிவு','விசாரணை']],
   ['spaces',['space','spaces','venue','venues','desk','desks','capacity','people','meeting','auditorium','ස්ථාන','ධාරිතාව','இடம்','இடங்கள்','கொள்ளளவு']]
@@ -48,6 +49,7 @@ function answer(topic,dummy){
     case 'cancellation':return {text:t('Contact TRACE by phone and official email to request cancellation. The team reviews the reservation, timing, refund and any applicable fee. This guide cannot cancel a booking or promise a refund.')};
     case 'alcohol':return {text:t('Declare alcohol in the customer booking form and accept the alcohol conditions when selecting Yes. Management approval is required, and alcohol may not be sold. Declaring alcohol does not grant approval.'),route:'request',label:t('Request a space')};
     case 'account':return {text:t('Customers can send a booking inquiry without creating an account. The Staff sign-in is for authorised TRACE staff. Use the customer email you can access so you can receive booking updates.'),route:'request',label:t('Request a space')};
+    case 'location':return {text:t('TRACE Expert City is in Maradana, Colombo. Contact details are available in the Get in touch section at the bottom of the website.'),route:'home',label:t('Home')};
     case 'spaces':return {text:t('Our Spaces lists meeting and training venues, auditoriums and co-working desks. Open a space to check its capacity, facilities, rates and conditions before sending an inquiry.'),route:'catalog',label:t('Browse spaces')};
     case 'welcome':return {text:t('Hello! Ask me about booking a space, availability, prices, payments, cancellations or alcohol conditions. You can type a question or choose one below.')};
     default:return {text:t('I can help with booking, availability, prices, payments, cancellations, alcohol conditions and customer accounts. Try “How do I book a space?” or choose a question below. For help with a specific reservation, contact TRACE.')};
@@ -68,6 +70,7 @@ export function guideMarkup({open=false,dummy=false,state=guideState}={}){
       <form data-form="trace-guide" class="guide-compose"><label for="guide-question-input" class="guide-sr-only">${t('Your question')}</label><input id="guide-question-input" name="question" data-guide-input type="text" maxlength="500" autocomplete="off" placeholder="${h(t('Type your question…'))}" value="${h(state.draft)}"><button type="submit" aria-label="${h(t('Send question'))}">→</button></form>
       <small class="guide-note">${t('Answers cover common questions. For help with your reservation, contact TRACE.')}</small>
     </section>
+    <button type="button" class="trace-guide-prompt" data-action="toggle-trace-guide" aria-expanded="${open}" aria-controls="trace-guide-panel"><span aria-hidden="true">?</span> ${t('Need help using the site?')} <strong>${t('Ask TRACE')}</strong></button>
     <button type="button" class="trace-guide-toggle" data-action="toggle-trace-guide" aria-expanded="${open}" aria-controls="trace-guide-panel" aria-label="${h(t(open?'Close guide':'Open guide'))}"><span>TRACE</span><b aria-hidden="true">✦</b></button>
   </aside>`;
 }
