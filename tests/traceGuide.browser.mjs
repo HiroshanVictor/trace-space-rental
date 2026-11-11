@@ -25,7 +25,7 @@ try{
   await form.locator('[name="message"]').fill('Please preserve these requirements.');
   const original=await form.elementHandle();
   assert.equal(await page.locator('.trace-guide-panel').isVisible(),false);
-  await page.locator('.trace-guide-toggle').click();
+  await page.locator('.trace-guide-prompt').click();
   const input=page.locator('[data-guide-input]');
   assert.equal(await input.evaluate(el=>el===document.activeElement),true);
   assert.equal(await page.locator('.guide-questions button').count(),6);
@@ -63,6 +63,21 @@ try{
   const panel=await page.locator('.trace-guide-panel').boundingBox();
   assert.ok(panel.x>=0&&panel.x+panel.width<=391&&panel.y>=0&&panel.y+panel.height<=844,JSON.stringify(panel));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+  await page.setViewportSize({width:1280,height:900});
+  await ask('Where is TRACE located?');
+  assert.match(await answer().textContent(),/Maradana, Colombo/);
+  await answer().locator('[data-go="home"]').click();
+  await page.locator('.booking-steps-grid').waitFor();
+  assert.equal(await page.locator('.booking-steps-grid li').count(),4,'Keep incoming homepage booking steps');
+  assert.equal(await page.locator('link[href="./customer-theme.css"]').count(),1,'Keep incoming customer theme');
+  await input.fill('How do I book?');await input.press('Escape');
+  await page.locator('.trace-guide-prompt').waitFor({state:'visible'});
+  await page.locator('.trace-guide-prompt').click();
+  assert.equal(await input.inputValue(),'How do I book?');
+  await page.locator('.find-space-stage').scrollIntoViewIfNeeded();
+  const scroll=await page.locator('.find-space-stage').evaluate(el=>el.scrollTop);
+  await page.locator('.guide-messages').hover();await page.mouse.wheel(0,-150);
+  assert.equal(await page.locator('.find-space-stage').evaluate(el=>el.scrollTop),scroll,'Homepage wheel handler must not intercept chat scrolling');
   assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
   console.log('TRACE Guide browser checks passed: typed/Enter questions, contextual How, six suggestions, safe fallback, draft/history persistence, form preservation, translation, navigation and mobile. No external service calls.');
 }catch(error){console.error('Browser errors:',errors);if(page)console.error((await page.locator('body').innerText()).slice(-1800));throw error}

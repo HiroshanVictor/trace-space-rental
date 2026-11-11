@@ -10,6 +10,7 @@ test('typed questions select specific answers rather than the generic booking or
     ['How can I pay for my booking?','payment'],['When is my reservation confirmed?','payment'],
     ['Can I cancel my payment and get a refund?','cancellation'],['Can I bring wine to the venue?','alcohol'],
     ['Do I need an account to book?','account'],['What spaces and facilities do you offer?','spaces'],['How?','booking'],
+    ['Where is TRACE located?','location'],['Can I reschedule my reservation?','cancellation'],
     ['What is the weather?','unknown'],['hello','welcome'],['ගෙවීම් කරන්නේ කොහොමද?','payment'],['முன்பதிவு செய்வது எப்படி?','booking']
   ])assert.equal(guideTopic(text),topic,text);
   assert.equal(guideTopic('   '),null);
