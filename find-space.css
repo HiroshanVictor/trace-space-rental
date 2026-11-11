@@ -30,9 +30,18 @@
 @media(max-width:760px) and (max-height:620px){.find-space-stage{--find-space-top-offset:158px;height:calc(100dvh - var(--find-space-top-offset) - 10px);min-height:330px}.find-space-card{grid-template-rows:minmax(62px,18%) minmax(0,1fr);padding:9px;gap:5px}.find-space-copy>.eyebrow{font-size:.62rem}.find-space-copy h3{font-size:1.4rem;margin:4px 0}.find-space-copy>p{font-size:.72rem;line-height:1.28;margin-bottom:4px}.find-space-rate{margin:5px 0}.find-space-actions{margin-top:5px}}
 @media(prefers-reduced-motion:reduce){.find-space-card,.find-space-arrows button{transition:none}}
 
-.find-space-stage{--find-space-card-gap:18px;display:flex;flex-direction:column;gap:var(--find-space-card-gap);scrollbar-width:none}
-.find-space-stage::-webkit-scrollbar,.find-space-copy::-webkit-scrollbar{display:none}
-.find-space-card{height:auto;min-height:0;flex:0 0 calc(100% - var(--find-space-card-gap))}
+.find-space-stage{--find-space-card-gap:18px;display:flex;flex-direction:column;gap:var(--find-space-card-gap);border:12px solid #0e1e2c;background:#0e1e2c;overflow-y:scroll;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#b7c8dc #173047}
+/* Rounded scrollbars stay inside the frame; other browsers retain the native scrollbar. */
+@supports selector(::-webkit-scrollbar){
+ .find-space-stage{scrollbar-width:auto;scrollbar-color:auto}
+}
+.find-space-stage::-webkit-scrollbar{display:block;width:10px}
+.find-space-stage::-webkit-scrollbar-track{margin-block:8px;background:rgba(255,255,255,.08);border-radius:999px}
+.find-space-stage::-webkit-scrollbar-thumb{min-height:40px;border:2px solid transparent;border-radius:999px;background:#b7c8dc;background-clip:padding-box}
+.find-space-stage::-webkit-scrollbar-thumb:hover{background-color:#e2ebf5}
+.find-space-stage::-webkit-scrollbar-button{display:none;width:0;height:0}
+.find-space-copy::-webkit-scrollbar{display:none}
+.find-space-card{height:auto;min-height:0;flex:0 0 calc(100% - var(--find-space-card-gap));background:transparent;border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
 .find-space-copy{overflow:hidden}
 .find-space-copy>p{margin:0;font-size:.76rem;line-height:1.4}
 .find-space-image-actions{position:absolute;z-index:2;right:18px;bottom:18px;display:flex;align-items:center;gap:10px}
@@ -40,9 +49,8 @@
 .find-space-image-actions .find-space-arrows{gap:7px}
 .find-space-image-actions .find-space-arrows button{min-height:42px;padding:0 12px}
 @media(max-width:760px){
- .find-space-stage{scrollbar-width:thin;scrollbar-color:#b7c8dc transparent}
- .find-space-stage::-webkit-scrollbar{display:block;width:6px}
- .find-space-stage::-webkit-scrollbar-thumb{border-radius:8px;background:#b7c8dc}
+ .find-space-stage{border-width:8px}
+ .find-space-stage::-webkit-scrollbar{width:8px}
  .find-space-card{flex-basis:calc(100% - var(--find-space-card-gap))}
  .find-space-copy>p{font-size:.7rem;line-height:1.2}
  .find-space-image-actions{right:7px;bottom:7px;gap:5px}

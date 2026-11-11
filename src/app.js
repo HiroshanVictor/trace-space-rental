@@ -772,13 +772,10 @@ window.addEventListener('hashchange',()=>{
 });
 let findSpaceWheelLocked=false;
 window.addEventListener('wheel',e=>{
- if(!e.deltaY||e.target.closest?.('.trace-guide'))return;
- const stage=app.querySelector('.find-space-stage');
+ if(!e.deltaY||e.ctrlKey||e.target.closest?.('.trace-guide'))return;
+ const stage=e.target.closest?.('.find-space-stage');
  if(!stage)return;
- const bounds=stage.getBoundingClientRect();
- if(e.clientY<bounds.top||e.clientY>bounds.bottom)return;
- const insideStage=e.clientX>=bounds.left&&e.clientX<=bounds.right;
- if(window.matchMedia('(max-width:760px)').matches&&insideStage)return;
+ if(window.matchMedia('(max-width:760px)').matches)return;
  const cards=[...stage.querySelectorAll('[data-find-space-card]')];
  if(!cards.length)return;
  const current=cards.reduce((closest,card,index)=>{
@@ -786,9 +783,8 @@ window.addEventListener('wheel',e=>{
   return distance<closest.distance?{index,distance}:closest;
  },{index:0,distance:Infinity}).index;
  const next=cards[current+(e.deltaY>0?1:-1)];
- if(!next)return;
  e.preventDefault();
- if(findSpaceWheelLocked)return;
+ if(!next||findSpaceWheelLocked)return;
  findSpaceWheelLocked=true;
  stage.scrollTo({top:next.offsetTop,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
  window.setTimeout(()=>{findSpaceWheelLocked=false},450);
