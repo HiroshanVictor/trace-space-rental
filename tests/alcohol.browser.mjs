@@ -90,6 +90,10 @@ try{
     assert.equal(await form.locator('[data-alcohol-fields],input[name="alcohol_planned"],input[name="alcohol_terms_accepted"]').count(),0,
       'The alcohol choice and acknowledgement belong only on the customer form');
     assert.doesNotMatch(await form.innerText(),/Will alcohol be brought or consumed/);
+    if(await form.getAttribute('data-inquiry')){
+      assert.equal(await form.locator('[name="discount"],[name="amount_paid"],[name="payment_status"],[name="payment_method"],[name="internal_notes"]').count(),0);
+      assert.doesNotMatch(await form.innerText(),/Pricing & payment record|Private staff notes|Dummy gateway/);
+    }
   }
   for(const declared of [false,true]){
     await go('inquiries');
@@ -105,6 +109,7 @@ try{
     await save(form);
     const record=(await values()).bookings.find(row=>row.customer_name===`Alcohol UI inquiry ${declared}`);
     assert.equal(record.alcohol_planned,declared);assert.equal(record.alcohol_terms_accepted,declared);
+    assert.equal(record.status,'pending');assert.equal(record.amount_paid,0);assert.equal(record.discount,0);assert.equal(record.payment_method,'cash');
   }
 
   await go('bookings');
@@ -113,6 +118,7 @@ try{
     await row.locator('[data-action="edit-booking"]').click();
     const form=page.locator('form[data-form="booking"]');
     await checkStaffForm(form);
+    assert.equal(await form.locator('[name="internal_notes"]').count(),1,'Keep payment and notes editing on the reservation edit form');
     await form.locator('[name="special_requests"]').fill('Preserve the customer declaration');await save(form);
     const edited=(await values()).bookings.find(row=>row.customer_name===`Alcohol UI inquiry ${declared}`);
     assert.equal(edited.alcohol_planned,declared);assert.equal(edited.alcohol_terms_accepted,declared);

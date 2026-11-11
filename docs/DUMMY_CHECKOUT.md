@@ -3,7 +3,14 @@
 New reservations created with `paymentGateway: 'dummy'` stay **Pending** with no
 recorded payment. Saving approves the request and queues the existing
 `advance_payment_requested` email. It uses the saved customer address and the
-existing reservation subject/thread. The email includes:
+existing reservation subject/thread.
+
+The inquiry conversion form collects customer/event details without the pricing,
+payment-record or private-notes section. Conversion starts with no discount or
+payment recorded, and uses the selected venue's rate to calculate the quote.
+Payment and notes editing remain available in the separate reservation forms.
+
+The email includes:
 
 > Your reservation has been approved, please make a half payment to confirm it. Click this link:
 

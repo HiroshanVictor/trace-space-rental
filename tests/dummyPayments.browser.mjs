@@ -46,6 +46,21 @@ try{
   await form.locator('button[type="submit"]').click();await form.waitFor({state:'hidden'});
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('tec-spacerental-v2')).bookings.find(row=>row.customer_name==='Checkout approval customer'));
   assert.equal(saved.payment_gateway,'dummy');assert.equal(saved.status,'pending');assert.equal(saved.amount_paid,0);assert.ok(saved.payment_deadline_at);
+  await page.evaluate(spaceId=>{
+    const key='tec-spacerental-v2',data=JSON.parse(localStorage.getItem(key));
+    data.inquiries.unshift({id:'checkout-conversion',name:'Payment conversion customer',email:'conversion@example.test',phone:'0771234567',space_id:spaceId,
+      start_at:'2030-11-05T09:00:00+05:30',end_at:'2030-11-05T11:00:00+05:30',event_nature:'Workshop',status:'new',message:'Conversion check',created_at:new Date().toISOString()});
+    localStorage.setItem(key,JSON.stringify(data));
+  },saved.space_id);
+  await page.goto(`${origin}/?staff-payment-conversion#inquiries`);
+  await page.locator('tr').filter({hasText:'Payment conversion customer'}).locator('[data-action="convert-inquiry"]').click();
+  const conversion=page.locator('form[data-form="booking"]');
+  assert.doesNotMatch(await conversion.innerText(),/Pricing & payment record|Private staff notes|Dummy gateway/);
+  assert.equal(await conversion.locator('[name="discount"],[name="amount_paid"],[name="payment_status"],[name="payment_method"],[name="internal_notes"]').count(),0);
+  await conversion.locator('button[type="submit"]').click();await conversion.waitFor({state:'hidden'});
+  const converted=await page.evaluate(()=>JSON.parse(localStorage.getItem('tec-spacerental-v2')).bookings.find(row=>row.inquiry_id==='checkout-conversion'));
+  assert.equal(converted.customer_email,'conversion@example.test');assert.equal(converted.status,'pending');assert.equal(converted.payment_gateway,'dummy');
+  assert.equal(converted.amount_paid,0);assert.equal(converted.discount,0);assert.equal(converted.amount,16000);assert.ok(converted.payment_deadline_at);
   cloudMode=true; // Guest checkout must work without loading the Supabase SDK or staff data.
   await page.goto(`${origin}/?customer-checkout#payment/browser-test-token`);
   await page.locator('form[data-form="dummy-payment"]').waitFor();
