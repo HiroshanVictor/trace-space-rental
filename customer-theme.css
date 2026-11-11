@@ -1,0 +1,47 @@
+.public-page{
+ position:relative;
+ isolation:isolate;
+ min-height:100vh;
+ background-color:#f2f5fa;
+ background-image:
+  radial-gradient(ellipse at 4% 11%,rgba(188,214,245,.56),transparent 31rem),
+  radial-gradient(ellipse at 96% 32%,rgba(246,219,188,.42),transparent 29rem),
+  radial-gradient(ellipse at 52% 82%,rgba(207,224,243,.46),transparent 35rem),
+  linear-gradient(145deg,#f7f9fc 0%,#eef3f9 48%,#f5f2ed 100%);
+}
+.public-page.homepage-page{
+ background-color:#f2f5fa;
+ background-image:
+  radial-gradient(ellipse at 2% 14%,rgba(188,214,245,.52),transparent 34rem),
+  radial-gradient(ellipse at 98% 43%,rgba(246,219,188,.39),transparent 31rem),
+  radial-gradient(ellipse at 46% 88%,rgba(207,224,243,.42),transparent 38rem),
+  linear-gradient(145deg,#f7f9fc 0%,#eef3f9 51%,#f5f2ed 100%);
+}
+.public-page:not(.homepage-page)>.public-section,
+.public-page:not(.homepage-page)>.pub-calendar-section{
+ background:
+  radial-gradient(ellipse at 8% 12%,rgba(202,221,244,.28),transparent 34rem),
+  radial-gradient(ellipse at 94% 80%,rgba(246,224,200,.22),transparent 29rem),
+  rgba(255,255,255,.12);
+}
+.public-page .frequent-bookings-note,
+.public-page .booking-steps-flow{
+ background:rgba(255,255,255,.78);
+}
+.auth-wrap{
+ background-color:#f2f5fa;
+ background-image:
+  radial-gradient(ellipse at 12% 18%,rgba(188,214,245,.68),transparent 31rem),
+  radial-gradient(ellipse at 90% 84%,rgba(246,219,188,.52),transparent 28rem),
+  linear-gradient(145deg,#f7f9fc,#edf2f8 58%,#f5f1eb);
+}
+@media(max-width:760px){
+ .public-page,
+ .public-page.homepage-page{
+  background-image:
+   radial-gradient(ellipse at 0 9%,rgba(188,214,245,.48),transparent 25rem),
+   radial-gradient(ellipse at 100% 52%,rgba(246,219,188,.34),transparent 23rem),
+   radial-gradient(ellipse at 24% 94%,rgba(207,224,243,.38),transparent 27rem),
+   linear-gradient(155deg,#f7f9fc,#eef3f9 60%,#f5f2ed);
+ }
+}

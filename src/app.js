@@ -276,7 +276,23 @@ function findSpaceShowcase(spaces){
  };
  return `<section class="find-space-section" aria-labelledby="find-space-title"><header class="find-space-heading"><div><div class="eyebrow">EXPLORE TRACE</div><h2 id="find-space-title">Find your Space</h2><p>Scroll inside the showcase to discover our venues. Each space has its own image, details and booking request.</p></div><span class="find-space-count">${count} spaces</span></header><div class="find-space-track"><div class="find-space-stage" tabindex="0" role="region" aria-labelledby="find-space-title">${list.map((space,index)=>{
   const description=spaceText(space,'description')||'A welcoming setting for your next meeting, workshop, event or workday.';
-  return `<article class="find-space-card ${index===0?'is-active':''}" data-find-space-card="${index}" aria-hidden="${index!==0}" ${index!==0?'inert':''}><div class="find-space-copy"><div class="eyebrow">${h(typeLabel(space.type))} <span>${String(index+1).padStart(2,'0')} / ${count}</span></div><h3>${h(spaceText(space))}</h3><p>${h(description)} ${h(context[space.type]||context.meeting)}</p><div class="find-space-rate"><small>Starting from</small><strong>${rateOf(space)}</strong></div><div class="find-space-actions"><button class="btn find-space-book" data-action="public-request" data-id="${h(space.id)}">Book Now ${ic('arrow')}</button><div class="find-space-arrows"><button type="button" data-action="find-space-step" data-index="${index}" data-direction="-1" aria-label="Previous space" ${index===0?'disabled':''}><span aria-hidden="true">←</span> Previous</button><button type="button" data-action="find-space-step" data-index="${index}" data-direction="1" aria-label="Next space" ${index===list.length-1?'disabled':''}>Next <span aria-hidden="true">→</span></button></div></div></div><div class="find-space-image" role="img" aria-label="${h(spaceText(space))}" style="${spaceImage(space)}"></div></article>`;
+  return `<article class="find-space-card ${index===0?'is-active':''}" data-find-space-card="${index}" aria-hidden="${index!==0}" ${index!==0?'inert':''}>
+   <div class="find-space-copy">
+    <div class="eyebrow">${h(typeLabel(space.type))} <span>${String(index+1).padStart(2,'0')} / ${count}</span></div>
+    <h3>${h(spaceText(space))}</h3>
+    <p>${h(description)} ${h(context[space.type]||context.meeting)}</p>
+    <div class="find-space-rate"><small>Starting from</small><strong>${rateOf(space)}</strong></div>
+   </div>
+   <div class="find-space-image" role="group" aria-label="${h(spaceText(space))} actions" style="${spaceImage(space)}">
+    <div class="find-space-image-actions">
+     <button class="btn find-space-book" data-action="public-request" data-id="${h(space.id)}">Book Now</button>
+     <div class="find-space-arrows">
+      <button type="button" data-action="find-space-step" data-index="${index}" data-direction="-1" aria-label="Previous space" ${index===0?'disabled':''}>Previous</button>
+      <button type="button" data-action="find-space-step" data-index="${index}" data-direction="1" aria-label="Next space" ${index===list.length-1?'disabled':''}>Next</button>
+     </div>
+    </div>
+   </div>
+  </article>`;
  }).join('')}</div></div></section>`;
 }
 function updateFindSpaceOnScroll(){
@@ -299,8 +315,9 @@ function restoreFindSpaceScroll(){
  stage.scrollTop=state.findSpaceIndex*stage.clientHeight;
  updateFindSpaceOnScroll();
 }
-function campusStory(spaces){const desks=spaces.find(s=>s.type==='desk')||spaces[0],gather=spaces.find(s=>s.type==='auditorium')||spaces[1]||spaces[0],meeting=spaces.find(s=>s.type==='meeting')||spaces[0];return `<section class="campus-story"><div class="campus-story-copy"><div class="eyebrow">TRACE EXPERT CITY · MARADANA, COLOMBO</div><h2>A restored campus made for work, learning and gathering.</h2><p>Choose a focused meeting room, a flexible co-working desk or a setting for your next large event. Every inquiry is reviewed by the TRACE team so the space, schedule and requirements fit together.</p><div class="campus-notes"><span><b>${spaces.length}</b> active spaces to explore</span><span><b>${meeting.capacity}+</b> people in our larger rooms</span><span><b>One team</b> to confirm your booking</span></div><div class="campus-actions"><button class="btn dark" data-go="catalog">${t("Explore spaces")} ${ic('arrow')}</button><button class="text-button" data-go="availability">${ic('calendar')} ${t("View booked times")}</button></div></div><div class="campus-story-images"><div class="story-image story-large" style="${spaceImage(desks)}"><span>Flexible workspaces</span></div><div class="story-image story-small" style="${spaceImage(gather)}"><span>Ideas in motion</span></div></div></section><section class="planning-band"><div><div class="eyebrow">A SIMPLE WAY TO PLAN</div><h2>Tell us what you are making space for.</h2></div><div class="planning-steps"><article><span>01</span><h3>Choose a setting</h3><p>Browse spaces by the kind of work, event or session you are planning.</p></article><article><span>02</span><h3>Check the day</h3><p>Use the public calendar to see occupied times before you send your request.</p></article><article><span>03</span><h3>Plan together</h3><p>Our team confirms availability and follows up on your event details.</p></article></div><button class="btn orange" data-action="planning-catalog">Book Now ${ic('arrow')}</button></section>`}
-function homePublic(){const spaces=publicSpaceOrder(state.data.spaces.filter(s=>s.is_active)),page=homePublicLegacy(),start=page.indexOf('<section class="public-section">'),end=page.indexOf('</section><section class="feature-band">',start);return start<0||end<0?page:page.slice(0,start)+frequentBookingSpaces(spaces)+findSpaceShowcase(spaces)+bookingOverview()+campusStory(spaces)+page.slice(end+10)}
+function campusStory(spaces){const desks=spaces.find(s=>s.type==='desk')||spaces[0],gather=spaces.find(s=>s.type==='auditorium')||spaces[1]||spaces[0],meeting=spaces.find(s=>s.type==='meeting')||spaces[0];return `<section class="campus-story"><div class="campus-story-copy"><div class="eyebrow">TRACE EXPERT CITY · MARADANA, COLOMBO</div><h2>A restored campus made for work, learning and gathering.</h2><p>Choose a focused meeting room, a flexible co-working desk or a setting for your next large event. Every inquiry is reviewed by the TRACE team so the space, schedule and requirements fit together.</p><div class="campus-notes"><span><b>${spaces.length}</b> active spaces to explore</span><span><b>${meeting.capacity}+</b> people in our larger rooms</span><span><b>One team</b> to confirm your booking</span></div><div class="campus-actions"><button class="btn dark" data-go="catalog">${t("Explore spaces")} ${ic('arrow')}</button><button class="text-button" data-go="availability">${ic('calendar')} ${t("View booked times")}</button></div></div><div class="campus-story-images"><div class="story-image story-large" style="${spaceImage(desks)}"><span>Flexible workspaces</span></div><div class="story-image story-small" style="${spaceImage(gather)}"><span>Ideas in motion</span></div></div></section>`}
+function bookingSteps(){return `<section class="booking-steps" aria-labelledby="booking-steps-title"><header class="booking-steps-heading"><div><div class="eyebrow">A SIMPLE WAY TO PLAN</div><h2 id="booking-steps-title">Steps to Book a Space</h2><p>Follow these four simple steps to plan your visit at TRACE Expert City.</p></div><span class="booking-steps-flow">Browse <span aria-hidden="true">·</span> Check <span aria-hidden="true">·</span> Request <span aria-hidden="true">·</span> Confirm</span></header><ol class="booking-steps-grid"><li><div class="booking-step-top"><span class="booking-step-number">01</span><span class="booking-step-icon">${ic('spaces')}</span></div><h3>Choose your space</h3><p>Explore meeting rooms, auditoriums and co-working spaces to find the right fit.</p><button class="booking-step-link" data-go="catalog">Browse spaces ${ic('arrow')}</button></li><li><div class="booking-step-top"><span class="booking-step-number">02</span><span class="booking-step-icon">${ic('calendar')}</span></div><h3>Check availability</h3><p>Choose your preferred date and review the public calendar for occupied times.</p><button class="booking-step-link" data-go="availability">View calendar ${ic('arrow')}</button></li><li><div class="booking-step-top"><span class="booking-step-number">03</span><span class="booking-step-icon">${ic('inquiries')}</span></div><h3>Send your request</h3><p>Tell us which space, date and details you have in mind. No account is needed.</p><button class="booking-step-link" data-go="request">Start a request ${ic('arrow')}</button></li><li><div class="booking-step-top"><span class="booking-step-number">04</span><span class="booking-step-icon">${ic('check')}</span></div><h3>Receive confirmation</h3><p>The TRACE team reviews your request and contacts you to confirm the booking.</p><span class="booking-step-note">Confirmation by the TRACE team</span></li></ol><p class="booking-steps-notice"><span aria-hidden="true">i</span> Sending a request does not reserve a timeslot. Your booking is confirmed only after the TRACE team follows up.</p></section>`}
+function homePublic(){const spaces=publicSpaceOrder(state.data.spaces.filter(s=>s.is_active)),page=homePublicLegacy(),start=page.indexOf('<section class="public-section">'),end=page.indexOf('</section><section class="feature-band">',start);return start<0||end<0?page:page.slice(0,start)+frequentBookingSpaces(spaces)+findSpaceShowcase(spaces)+bookingOverview()+bookingSteps()+campusStory(spaces)+page.slice(end+10)}
 function catalogPublic(){let list=publicSpaceOrder(state.data.spaces.filter(s=>s.is_active&&(state.type==='all'||s.type===state.type)));return `<div class="public-page">${headerPublic()}<section class="catalog-banner"><div class="catalog-banner-inner"><div class="eyebrow">${t("EXPLORE OUR SPACES")}</div><h1>${t("Find the perfect setting for your next occasion.")}</h1><p>${t("Every space is designed to help ideas, teams and communities thrive. Public inquiries are requests only, not confirmed reservations.")} <button class="tiny-link" data-go="availability" style="color:#ffd898">${t("See booked venues &amp; times →")}</button></p></div></section><section class="public-section" style="padding-top:38px"><div class="catalog-filter">${[['all',t("All spaces")],['meeting',t("Meeting & training")],['auditorium',t("Auditorium")],['desk',t("Co-working desks")]].map(([x,label])=>`<button class="filter-pill ${state.type===x?'selected':''}" data-action="filter-type" data-value="${x}">${label}</button>`).join('')}</div><div class="public-cards">${list.map(spaceCardPublic).join('')||empty(t("No spaces in this category"))}</div></section>${footerPublic()}</div>`}
 function removedDetailDesign(){
  const s=findSpace(state.activeInquirySpace)||state.data.spaces.find(x=>x.is_active);if(!s)return catalogPublic();
@@ -481,7 +498,6 @@ function downloadCsv(table){const keys={bookings:['reference','customer_name','c
 async function clickAction(target){
  if(target.dataset.action==='reload-checkout'){await loadCheckout();return}
  const act=target.dataset.action,id=target.dataset.id;
- if(act==='planning-catalog'){await navigate('catalog');return}
  if(act==='retry-booking-email'){
   const result=await sendBookingConfirmation(id);
   try{await refresh()}catch{/* Booking was saved before this email attempt. */}
@@ -754,6 +770,29 @@ window.addEventListener('hashchange',()=>{
  const paymentMatch=location.hash.match(/^#payment\/(.+)$/);if(!paymentMatch)return;
  state.route='payment';state.modal=null;checkoutState.token=paymentMatch[1];checkoutState.payment=null;loadCheckout();
 });
+let findSpaceWheelLocked=false;
+window.addEventListener('wheel',e=>{
+ if(!e.deltaY||e.target.closest?.('.trace-guide'))return;
+ const stage=app.querySelector('.find-space-stage');
+ if(!stage)return;
+ const bounds=stage.getBoundingClientRect();
+ if(e.clientY<bounds.top||e.clientY>bounds.bottom)return;
+ const insideStage=e.clientX>=bounds.left&&e.clientX<=bounds.right;
+ if(window.matchMedia('(max-width:760px)').matches&&insideStage)return;
+ const cards=[...stage.querySelectorAll('[data-find-space-card]')];
+ if(!cards.length)return;
+ const current=cards.reduce((closest,card,index)=>{
+  const distance=Math.abs(card.offsetTop-stage.scrollTop);
+  return distance<closest.distance?{index,distance}:closest;
+ },{index:0,distance:Infinity}).index;
+ const next=cards[current+(e.deltaY>0?1:-1)];
+ if(!next)return;
+ e.preventDefault();
+ if(findSpaceWheelLocked)return;
+ findSpaceWheelLocked=true;
+ stage.scrollTo({top:next.offsetTop,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+ window.setTimeout(()=>{findSpaceWheelLocked=false},450);
+},{passive:false,capture:true});
 window.addEventListener('scroll',updatePublicHeader,{passive:true});
 app.addEventListener('scroll',e=>{
  if(e.target.matches('.find-space-stage'))updateFindSpaceOnScroll();
