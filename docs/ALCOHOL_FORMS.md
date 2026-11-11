@@ -1,8 +1,10 @@
 # Alcohol declarations
 
-Public inquiries, staff create/edit reservations and inquiry conversion share the existing `alcohol_planned` and `alcohol_terms_accepted` booleans. There is no new approval field. New forms start at No with acknowledgement unchecked. Choosing Yes reveals a required acknowledgement; choosing No hides and disables it and clears the previous checkbox selection. Saved values are preserved on initial editing/conversion, including historical records. Changing the interface language or the selected venue preserves the form state and conditional validation.
+The customer booking/inquiry form collects the existing `alcohol_planned` and `alcohol_terms_accepted` booleans. There is no new approval field. New customer forms start at No with acknowledgement unchecked. Choosing Yes reveals a required acknowledgement; choosing No hides and disables it and clears the previous checkbox selection. Changing the interface language or the selected venue preserves the form state and conditional validation.
 
-An acknowledgement records awareness of the conditions only. It never grants management approval. Every form states this explicitly in English, Sinhala and Tamil. The same translated validation message is used for browser validation, application validation and database errors.
+Staff create/edit and inquiry conversion forms do not show an editable alcohol option. Conversion copies both saved customer values, and editing preserves the reservation's saved values. A new staff-created reservation defaults both values to false without claiming a customer acknowledgement. Staff can view the declaration and acknowledgement in inquiry and reservation details.
+
+An acknowledgement records awareness of the conditions only. It never grants management approval. The customer form states this explicitly in English, Sinhala and Tamil. The same translated validation message is used for browser validation, application validation and database errors.
 
 ## Migration
 
@@ -33,4 +35,4 @@ $env:PLAYWRIGHT_CHANNEL='msedge'
 npm run test:alcohol-ui
 ```
 
-The browser suite launches its own local server and replaces the browser config with offline demo mode. It checks Yes/No, unchecked/conditional acknowledgement, language switching, public saving, staff creation/editing, conversion, details and control alignment at desktop and mobile widths. External network calls are blocked, and any Supabase/email request fails the test.
+The browser suite launches its own local server and replaces the browser config with offline demo mode. It checks customer Yes/No choices, unchecked/conditional acknowledgement, language switching, public saving and control alignment at desktop and mobile widths. It also checks the absence of alcohol inputs in staff forms, preservation through conversion/editing, staff creation defaults and read-only details. External network calls are blocked, and any Supabase/email request fails the test.

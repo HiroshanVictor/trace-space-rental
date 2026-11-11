@@ -5,7 +5,7 @@ const address=value=>typeof value==='string'&&/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@
 const value=(env,key)=>String(env[key]||'').trim();
 // Only fixed operational codes may appear in logs or stored delivery failures.
 export function emailFailureCode(error){
-  const codes=['smtp_auth_failed','smtp_timeout','smtp_send_failed','smtp_recipient_rejected','smtp_invalid_response','provider_rejected','database_unavailable','conversation_unavailable','invalid_saved_recipient','email_not_configured'];
+  const codes=['smtp_auth_failed','smtp_timeout','smtp_send_failed','smtp_recipient_rejected','smtp_invalid_response','provider_rejected','database_unavailable','conversation_unavailable','invalid_saved_recipient','email_not_configured','checkout_not_configured','checkout_unavailable'];
   return codes.includes(error?.message)?error.message:'email_provider_unavailable';
 }
 

@@ -27,7 +27,9 @@ export function buildConfig(env,existing={}) {
   const conversationReady=emailReady;
   const reservationEmailEndpoint=env.RESERVATION_EMAIL_ENDPOINT!==undefined?env.RESERVATION_EMAIL_ENDPOINT.trim():existing.reservationEmailEndpoint||(conversationReady?'/.netlify/functions/send-reservation-email':'');
   if(reservationEmailEndpoint && (!reservationEmailEndpoint.startsWith('/')||reservationEmailEndpoint.startsWith('//')))throw Error('RESERVATION_EMAIL_ENDPOINT must be a path on this website.');
-  return {supabaseUrl:url.replace(/\/$/,''),supabaseAnonKey:key,notifyInquiryEndpoint:endpoint,reservationEmailEndpoint};
+  const paymentGateway=env.PAYMENT_GATEWAY??existing.paymentGateway;
+  if(paymentGateway!==undefined&&!['manual','dummy'].includes(paymentGateway))throw Error('PAYMENT_GATEWAY must be manual or dummy.');
+  return {supabaseUrl:url.replace(/\/$/,''),supabaseAnonKey:key,notifyInquiryEndpoint:endpoint,reservationEmailEndpoint,...(paymentGateway?{paymentGateway}:{})};
 }
 
 export async function configure({env=process.env,configPath=resolve('config.js')} = {}) {

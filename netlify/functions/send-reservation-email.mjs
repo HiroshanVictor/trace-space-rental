@@ -1,5 +1,6 @@
 import {buildReservationEmail,threadHeaders} from './reservation-email-core.mjs';
 import {emailSettings,sendProviderEmail,emailFailureCode,emailConfigurationIssues} from './lib/email-provider.mjs';
+import {paymentSettings,paymentLink} from './lib/payment-links.mjs';
 const uuid=value=>typeof value==='string'&&/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(value);
 export function createHandler({env=process.env,fetchImpl=globalThis.fetch,createTransportImpl,logger=console}={}){
  return async req=>{
@@ -48,7 +49,7 @@ export function createHandler({env=process.env,fetchImpl=globalThis.fetch,create
    if(!conversation)throw Error('conversation_unavailable');
    let threading=threadHeaders(conversation);
    let firstSmtpMessage=false;
-   if(settings.provider==='gmail_smtp'&&!threading.parent&&outbox.event_type!=='inquiry_received'){
+   if((settings.provider==='gmail_smtp'||conversation.inquiry_id===null)&&!threading.parent&&outbox.event_type!=='inquiry_received'){
     // Direct staff bookings can start their own conversation. Previously accepted
     // messages must retain their real parent; never fabricate a Resend Message-ID.
     const history=await db(`reservation_email_messages?conversation_id=eq.${conversation.id}&select=rfc_message_id&order=created_at.asc`);
@@ -60,7 +61,15 @@ export function createHandler({env=process.env,fetchImpl=globalThis.fetch,create
     await db('rpc/record_reservation_email_result',{method:'POST',body:JSON.stringify({p_outbox:outbox.id,p_provider_id:'',p_message_id:'',p_parent:'',p_references:[],p_error:'awaiting_parent_message_id'})});
     return reply(202,{ok:true,status:'awaiting_thread'});
    }
-   const message=buildReservationEmail({event:outbox.event_type,conversation,inquiry,booking,space,paymentInstructions:(await db('org_settings?id=eq.1&select=payment_instructions'))?.[0]?.payment_instructions||''});
+   let checkout=null;
+   if(outbox.event_type==='advance_payment_requested'&&booking?.payment_gateway==='dummy'){
+    const payment=paymentSettings(env);
+    if(!payment)throw Error('checkout_not_configured');
+    const [request]=await db('rpc/ensure_dummy_reservation_payment',{method:'POST',body:JSON.stringify({p_booking_id:booking.id})});
+    if(!request)throw Error('checkout_unavailable');
+    checkout={url:paymentLink(request,payment),amount:Number(request.amount_requested)};
+   }
+   const message=buildReservationEmail({event:outbox.event_type,conversation,inquiry,booking,space,checkout,paymentInstructions:(await db('org_settings?id=eq.1&select=payment_instructions'))?.[0]?.payment_instructions||''});
    const {providerId,rfcMessageId}=await sendProviderEmail({env,fetchImpl,createTransportImpl,message:{...message,to:conversation.customer_email,threading},idempotencyKey:outbox.idempotency_key,lookupMessageId:true});
    await db('rpc/record_reservation_email_result',{method:'POST',body:JSON.stringify({p_outbox:outbox.id,p_provider_id:providerId,p_message_id:rfcMessageId,p_parent:threading.parent,p_references:threading.references,p_error:null})});
    return reply(200,{ok:true,status:'accepted',thread_ready:Boolean(rfcMessageId)});

@@ -84,7 +84,7 @@ test('sample content translates only for the original records and never mutates 
 });
 
 test('both translations cover every explicit UI message and preserve interpolation parameters',async()=>{
-  for(const file of ['app.js','i18n.js','languageUI.js']){
+  for(const file of ['app.js','i18n.js','languageUI.js','paymentCheckout.js','traceGuide.js']){
     const source=await readFile(new URL('../src/'+file,import.meta.url),'utf8');
     const keys=[...source.matchAll(/\bt\(("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g)].map(match=>Function('return '+match[1])());
     for(const key of keys)assert.ok(Object.hasOwn(messages,key),`${file}: untranslated message ${key}`);

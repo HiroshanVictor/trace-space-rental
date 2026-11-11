@@ -10,6 +10,8 @@
     "test": "node --test tests/*.test.mjs",
     "test:alcohol-ui": "node tests/alcohol.browser.mjs",
     "test:calendar-ui": "node tests/staffCalendar.browser.mjs",
+    "test:payment-ui": "node tests/dummyPayments.browser.mjs",
+    "test:guide-ui": "node tests/traceGuide.browser.mjs",
     "configure": "node scripts/configure.mjs",
     "check:cloud": "node scripts/check-cloud.mjs"
   },

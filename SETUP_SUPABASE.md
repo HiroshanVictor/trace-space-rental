@@ -97,7 +97,7 @@ To test real customer emails without a custom domain, follow [GMAIL_SMTP_SETUP.m
 
 For threaded customer reservation emails, run `supabase/12_reservation_email_conversations.sql`, `supabase/13_fix_reservation_email_rls.sql`, and `supabase/14_reservation_email_workflow_hardening.sql` after migration 11 and deploy the Netlify functions. In Netlify, set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `INQUIRY_TO_EMAIL`, and `SCHEDULER_SECRET`; set `RESEND_REPLY_TO_EMAIL` and `RESEND_WEBHOOK_SECRET` when a monitored reply mailbox and Resend webhook are ready. Do not put any of these values in `config.js`. Then follow [RESERVATION_EMAILS.md](RESERVATION_EMAILS.md) for the inbox and scheduled-worker test steps. The workflow is disabled until those settings are present; it does not send a real email during setup.
 
-Payments are recorded manually (amount received and status). No actual charges are processed. Customer emails/phones are private tables under staff-only RLS. Define a privacy notice and retention policy before opening a public production service.
+Existing manual reservations keep their recorded amount received and status. For the approval email → 50% dummy checkout → automatic confirmation workflow, follow [DUMMY_CHECKOUT.md](docs/DUMMY_CHECKOUT.md), apply migration 16 after migrations 12–15, and configure the server-only payment signing secret and canonical site URL in Netlify. This checkout records simulated payments only; no actual charges are processed. Customer emails/phones and payment-request records remain private under RLS. Define a privacy notice and retention policy before opening a public production service.
 
 ## Operations checklist
 

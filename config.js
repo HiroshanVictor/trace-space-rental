@@ -4,5 +4,6 @@ window.SPACE_RENTAL_CONFIG = {
   supabaseUrl: 'https://iigqqtduoswtujpziaaq.supabase.co',
   supabaseAnonKey: 'sb_publishable_lgI19khACu_yGBgfCvDjSg_R6j5Aeiw', // Supabase publishable/anon key only; NEVER a service-role key.
   notifyInquiryEndpoint: '/.netlify/functions/notify-inquiry',
-  reservationEmailEndpoint: '/.netlify/functions/send-reservation-email'
+  reservationEmailEndpoint: '/.netlify/functions/send-reservation-email',
+  paymentGateway: 'dummy' // Test checkout only. Signing credentials stay in Netlify environment variables.
 };

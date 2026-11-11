@@ -1,0 +1,69 @@
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {createServer} from 'node:net';
+import {chromium} from 'playwright';
+
+const socket=createServer();await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));
+const port=socket.address().port;await new Promise(resolve=>socket.close(resolve));
+const origin=`http://127.0.0.1:${port}`;
+const server=spawn(process.execPath,['server.mjs'],{env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
+let browser,page;const errors=[],external=[];
+try{
+  await new Promise((resolve,reject)=>{server.stdout.once('data',resolve);server.once('error',reject)});
+  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHANNEL?{channel:process.env.PLAYWRIGHT_CHANNEL}:{})});
+  const context=await browser.newContext({viewport:{width:1280,height:900}});
+  await context.route('**/*',route=>{
+    const url=route.request().url();
+    if(url===`${origin}/config.js`)return route.fulfill({contentType:'text/javascript',body:"window.SPACE_RENTAL_CONFIG={paymentGateway:'dummy'};"});
+    if(url.includes('.supabase.co')||url.includes('/.netlify/functions/')){external.push(url);return route.abort()}
+    return url.startsWith(origin)?route.continue():route.abort();
+  });
+  page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(`${origin}/#request`);
+  const form=page.locator('form[data-form="inquiry"]');await form.waitFor();
+  await form.locator('[name="name"]').fill('Keep my booking draft');
+  await form.locator('[name="message"]').fill('Please preserve these requirements.');
+  const original=await form.elementHandle();
+  assert.equal(await page.locator('.trace-guide-panel').isVisible(),false);
+  await page.locator('.trace-guide-toggle').click();
+  const input=page.locator('[data-guide-input]');
+  assert.equal(await input.evaluate(el=>el===document.activeElement),true);
+  assert.equal(await page.locator('.guide-questions button').count(),6);
+  const answer=()=>page.locator('.guide-answer').last();
+  const ask=async text=>{await input.fill(text);await input.press('Enter');await page.waitForFunction(()=>document.querySelector('[data-guide-input]')?.value==='')};
+  await ask('How?');assert.match(await answer().textContent(),/choose a venue and click Book Now/);
+  await ask('How can I cancel my reservation?');assert.match(await answer().textContent(),/phone and official email/);
+  await ask('How?');assert.match(await answer().textContent(),/phone and official email/);
+  await page.locator('[data-action="guide-question"][data-question="payment"]').click();
+  assert.match(await answer().textContent(),/no real money is collected/);
+  await ask('Where do I find prices?');assert.match(await answer().textContent(),/each venue’s rates/);
+  await ask('Tell me about elephants');assert.match(await answer().textContent(),/choose a question below/);
+  await ask('<img src=x onerror="window.guideXss=true">');
+  assert.equal(await page.locator('.guide-message img').count(),0);assert.equal(await page.evaluate(()=>window.guideXss),undefined);
+  const count=await page.locator('.guide-message').count();await input.fill('   ');await input.press('Enter');
+  assert.equal(await page.locator('.guide-message').count(),count);
+  await input.fill('Draft question');await input.press('Escape');
+  assert.equal(await page.locator('.trace-guide-panel').isVisible(),false);
+  assert.equal(await page.locator('.trace-guide-toggle').evaluate(el=>el===document.activeElement),true);
+  await page.locator('.trace-guide-toggle').click();assert.equal(await input.inputValue(),'Draft question');
+  assert.equal(await form.locator('[name="name"]').inputValue(),'Keep my booking draft');
+  assert.equal(await form.locator('[name="message"]').inputValue(),'Please preserve these requirements.');
+  assert.equal(await original.evaluate(el=>el.isConnected),true,'Chat interactions must not rerender the customer form');
+  await page.locator('.public-header [data-language-toggle]').click();
+  await page.locator('.public-header [data-language="si"]').click();
+  await page.locator('[data-action="guide-question"][data-question="booking"]').click();
+  assert.match(await answer().textContent(),/වෙන්කිරීම/);
+  await page.locator('.public-header [data-language-toggle]').click();
+  await page.locator('.public-header [data-language="en"]').click();
+  await page.locator('[data-action="guide-question"][data-question="availability"]').click();
+  await answer().locator('[data-go="availability"]').click();
+  await page.waitForFunction(()=>location.hash==='#availability');
+  assert.equal(await page.locator('.trace-guide.open').count(),1);
+  await page.setViewportSize({width:390,height:844});
+  const panel=await page.locator('.trace-guide-panel').boundingBox();
+  assert.ok(panel.x>=0&&panel.x+panel.width<=391&&panel.y>=0&&panel.y+panel.height<=844,JSON.stringify(panel));
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+  assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
+  console.log('TRACE Guide browser checks passed: typed/Enter questions, contextual How, six suggestions, safe fallback, draft/history persistence, form preservation, translation, navigation and mobile. No external service calls.');
+}catch(error){console.error('Browser errors:',errors);if(page)console.error((await page.locator('body').innerText()).slice(-1800));throw error}
+finally{await browser?.close();server.kill()}

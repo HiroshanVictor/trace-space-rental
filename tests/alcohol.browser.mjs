@@ -86,6 +86,11 @@ try{
     assert.equal(inquiry.alcohol_planned,declared);assert.equal(inquiry.alcohol_terms_accepted,declared);
   }
   await page.evaluate(()=>sessionStorage.setItem('tec-demo-admin','1'));
+  async function checkStaffForm(form){
+    assert.equal(await form.locator('[data-alcohol-fields],input[name="alcohol_planned"],input[name="alcohol_terms_accepted"]').count(),0,
+      'The alcohol choice and acknowledgement belong only on the customer form');
+    assert.doesNotMatch(await form.innerText(),/Will alcohol be brought or consumed/);
+  }
   for(const declared of [false,true]){
     await go('inquiries');
     const row=page.locator('tr').filter({hasText:`Alcohol UI inquiry ${declared}`});
@@ -94,8 +99,7 @@ try{
     await page.locator('.modal [data-action="close-modal"]').last().click();
     await row.locator('[data-action="convert-inquiry"]').click();
     const form=page.locator('form[data-form="booking"]');
-    assert.equal(await choice(form,declared?'yes':'no').isChecked(),true);
-    assert.equal(await acknowledgement(form).isChecked(),declared);
+    await checkStaffForm(form);
     const day=declared?'2030-11-05':'2030-11-04';
     await form.locator('[name="start_at"]').fill(`${day}T09:00`);await form.locator('[name="end_at"]').fill(`${day}T10:00`);
     await save(form);
@@ -104,36 +108,34 @@ try{
   }
 
   await go('bookings');
-  await page.locator('tr').filter({hasText:'Alcohol UI inquiry true'}).locator('[data-action="edit-booking"]').click();
-  let form=page.locator('form[data-form="booking"]');
-  assert.equal(await choice(form,'yes').isChecked(),true);assert.equal(await acknowledgement(form).isChecked(),true);
-  await form.locator('[name="special_requests"]').fill('Preserve the saved declaration');await save(form);
-  assert.equal((await values()).bookings.find(row=>row.customer_name==='Alcohol UI inquiry true').alcohol_terms_accepted,true);
-  await page.locator('tr').filter({hasText:'Alcohol UI inquiry true'}).locator('[data-action="edit-booking"]').click();
-  form=page.locator('form[data-form="booking"]');await choice(form,'no').check();await save(form);
-  const edited=(await values()).bookings.find(row=>row.customer_name==='Alcohol UI inquiry true');
-  assert.equal(edited.alcohol_planned,false);assert.equal(edited.alcohol_terms_accepted,false);
-
   for(const declared of [false,true]){
-    await page.locator('[data-action="new-booking"]').click();form=page.locator('form[data-form="booking"]');
-    await checkNo(form);
-    await form.locator('[name="customer_name"]').fill(`Alcohol UI staff ${declared}`);
-    await form.locator('[name="customer_email"]').fill('staff-ui@example.test');
-    await form.locator('[name="event_nature"]').fill('Staff test workshop');
-    const day=declared?'2030-11-07':'2030-11-06';
-    await form.locator('[name="start_at"]').fill(`${day}T09:00`);await form.locator('[name="end_at"]').fill(`${day}T10:00`);
-    if(declared){
-      await choice(form,'yes').check();assert.equal(await acknowledgement(form).isChecked(),false);
-      assert.equal(await acknowledgement(form).evaluate(el=>el.checkValidity()),false);
-      await acknowledgement(form).check();
-    }
-    await checkAlignment(form);await page.setViewportSize({width:390,height:844});await checkAlignment(form);
-    await page.setViewportSize({width:1280,height:900});await save(form);
-    const saved=(await values()).bookings.find(row=>row.customer_name===`Alcohol UI staff ${declared}`);
-    assert.equal(saved.alcohol_planned,declared);assert.equal(saved.alcohol_terms_accepted,declared);
+    const row=page.locator('tr').filter({hasText:`Alcohol UI inquiry ${declared}`});
+    await row.locator('[data-action="edit-booking"]').click();
+    const form=page.locator('form[data-form="booking"]');
+    await checkStaffForm(form);
+    await form.locator('[name="special_requests"]').fill('Preserve the customer declaration');await save(form);
+    const edited=(await values()).bookings.find(row=>row.customer_name===`Alcohol UI inquiry ${declared}`);
+    assert.equal(edited.alcohol_planned,declared);assert.equal(edited.alcohol_terms_accepted,declared);
+    await row.locator('button[data-action="view-booking"]').click();
+    assert.equal(await page.locator('.detail-pair').filter({hasText:'Alcohol brought or consumed'}).locator('strong').textContent(),declared?'Yes':'No');
+    assert.equal(await page.locator('.detail-pair').filter({hasText:'Alcohol conditions acknowledged'}).locator('strong').textContent(),declared?'Yes':'No');
+    await page.locator('.modal [data-action="close-modal"]').last().click();
   }
+
+  await page.locator('[data-action="new-booking"]').click();
+  const form=page.locator('form[data-form="booking"]');
+  await checkStaffForm(form);
+  await page.setViewportSize({width:390,height:844});await checkStaffForm(form);
+  await page.setViewportSize({width:1280,height:900});
+  await form.locator('[name="customer_name"]').fill('Alcohol UI staff defaults');
+  await form.locator('[name="customer_email"]').fill('staff-ui@example.test');
+  await form.locator('[name="event_nature"]').fill('Staff test workshop');
+  await form.locator('[name="start_at"]').fill('2030-11-06T09:00');await form.locator('[name="end_at"]').fill('2030-11-06T10:00');
+  await save(form);
+  const saved=(await values()).bookings.find(row=>row.customer_name==='Alcohol UI staff defaults');
+  assert.equal(saved.alcohol_planned,false);assert.equal(saved.alcohol_terms_accepted,false);
   assert.deepEqual(unexpectedRequests,[]);assert.deepEqual(errors,[]);
-  console.log('Alcohol browser checks passed: public Yes/No, conditional validation, language restoration, staff create/edit, conversion, details, desktop/mobile alignment. No cloud writes or email calls.');
+  console.log('Alcohol browser checks passed: customer-only Yes/No and conditional acknowledgement, language restoration, no staff alcohol controls, saved values preserved through conversion/editing, staff creation defaults, read-only details and desktop/mobile alignment. No cloud writes or email calls.');
 }catch(error){
   console.error('Browser errors:',errors);
   if(page)console.error('Visible page:',(await page.locator('body').innerText()).slice(0,1800));

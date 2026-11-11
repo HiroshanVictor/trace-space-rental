@@ -1,0 +1,20 @@
+.trace-guide .trace-guide-panel{padding:0;display:flex;flex-direction:column;width:min(360px,calc(100vw - 32px));max-height:calc(100dvh - 116px);overflow:hidden;pointer-events:auto}
+.trace-guide .trace-guide-panel[hidden]{display:none}
+.trace-guide .trace-guide-head{padding:16px 16px 10px;margin:0;border-bottom:1px solid #edf1f8;flex-shrink:0}
+.trace-guide .trace-guide-head span{display:block;color:#77859d;font-size:.72rem;margin-top:3px}
+.guide-messages{padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;overscroll-behavior:contain;min-height:70px;max-height:290px}
+.guide-message{max-width:94%;border-radius:14px;padding:11px 13px;font-size:.8rem;line-height:1.55;overflow-wrap:anywhere;flex-shrink:0}
+.guide-answer{background:#f0f4fb;color:#61738e;align-self:flex-start}
+.trace-guide .guide-message p{margin:0;color:inherit;font-size:inherit;line-height:inherit}
+.guide-answer button{border:0;background:none;color:#1d52bb;font-weight:700;font-size:.76rem;padding:8px 0 0;cursor:pointer;text-align:left}
+.guide-user{background:#e6eeff;color:#244d96;align-self:flex-end;white-space:pre-wrap}
+.guide-questions{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-top:1px solid #edf1f8;flex-shrink:0}
+.guide-questions button{border:1px solid #d7e3f7;background:#fff;border-radius:16px;padding:6px 9px;color:#28518e;cursor:pointer;font-size:.7rem;line-height:1.35}
+.guide-questions button:hover{background:#edf3ff;border-color:#8aa9e4}
+.guide-compose{display:flex;gap:7px;padding:0 14px;flex-shrink:0}
+.guide-compose input{width:100%;min-width:0;border:1px solid #d4e0f5;border-radius:10px;padding:10px 11px;font:inherit;font-size:.8rem;background:#fff;color:#142c50}
+.guide-compose button{border:0;border-radius:10px;background:#2355cf;color:white;min-width:40px;font-size:1.25rem;cursor:pointer}
+.trace-guide .guide-note{padding:8px 14px 12px;margin:0;line-height:1.4;font-size:.66rem;flex-shrink:0}
+.guide-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.trace-guide button:focus-visible,.guide-compose input:focus-visible{outline:2px solid #2254c7;outline-offset:2px}
+@media(max-height:600px){.guide-messages{max-height:150px}.guide-questions button{padding:4px 7px}.trace-guide .trace-guide-head{padding-top:10px}}
